@@ -8,7 +8,7 @@ O projeto começa como **site + newsletter**, com vídeos curtos faceless no Tik
 
 - Fase: implementação do MVP editorial.
 - Nome da marca: **Allegorio**, sujeito à validação jurídica e de disponibilidade digital.
-- Stack inicial: Nuxt, TypeScript e Nuxt Content.
+- Stack: Nuxt 4 + TypeScript + Nuxt Content, em `web/`. Phoenix entra depois, quando houver estado durável.
 - Identidade visual: direção inicial em tons de marrom e branco, ainda em exploração.
 - Produto lançado: não.
 - Data deste contexto: 2026-08-16.
@@ -25,27 +25,23 @@ O projeto começa como **site + newsletter**, com vídeos curtos faceless no Tik
 
 O arquivo [CLAUDE.md](CLAUDE.md) resume o contexto operacional para futuras sessões com agentes de código.
 
+## Estrutura
+
+```
+docs/   documentação estratégica (fonte de verdade do produto)
+web/    aplicação Nuxt — blog + newsletter
+```
+
 ## Desenvolvimento local
 
-### Requisitos
-
-- Node.js 22.12 ou superior;
-- pnpm 11.
-
-### Comandos
+Requer Node 22.12+ e pnpm 11.
 
 ```bash
+cd web
 pnpm install
-cp .env.example .env
 pnpm dev
 ```
 
-Verificações disponíveis:
-
-```bash
-pnpm typecheck
-pnpm build
-pnpm generate
-```
-
-O frontend está em `app/`, os conteúdos editoriais em `content/` e o schema das collections em `content.config.ts`.
+Artigos ficam em `web/content/artigos/*.md`, com schema em `web/content.config.ts`.
+As inscrições da newsletter são gravadas em `web/.data/subscribers.jsonl` — arquivo local,
+provisório até existir um backend.

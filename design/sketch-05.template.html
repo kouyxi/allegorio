@@ -1,0 +1,841 @@
+<title>Allegorio Home</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Martian+Mono:wdth,wght@75..112.5,300..700&display=swap">
+
+<style>
+/* ── tokens ───────────────────────────────────────────────────────────
+   Same system as sketch 03. Black and white committed to; the brown
+   survives only as a mark — ticker, numerals, hover. Never a surface. */
+:root {
+  --paper:   #efede6;
+  --paper-2: #e5e2d9;
+  --ink:     #0e0e0c;
+  --terra:   #8a5a2b;
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --bar: 2px;
+  --hair: 1px;
+  --gutter: clamp(1rem, 3vw, 2.5rem);
+  --max: 1680px;
+}
+
+*, *::before, *::after { box-sizing: border-box; border-radius: 0; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-variation-settings: "wdth" 80, "wght" 400;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; }
+img { display: block; max-width: 100%; }
+
+:focus-visible { outline: var(--bar) solid var(--terra); outline-offset: 2px; }
+
+.shell { max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+
+/* every grid track is minmax(0, 1fr) and every display word is sized to
+   fit its column; break-word on .fat is the last line of defence */
+.lead > *, .cols > *, .triad > *, .path > *, .strip > *, .carta > * { min-width: 0; }
+
+/* ── type roles ───────────────────────────────────────────────────── */
+/* Archivo Expanded 900 runs ~1em per capital. Every display size below
+   is picked so the longest word in its column still fits. */
+.fat {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 112, "wght" 900;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.88;
+  overflow-wrap: break-word;
+}
+
+.lbl {
+  font-family: var(--mono);
+  font-variation-settings: "wdth" 100, "wght" 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dim { color: color-mix(in oklab, var(--ink) 62%, var(--paper)); }
+.acc { color: var(--terra); }
+.mt { margin-top: 0.9rem; }
+.mb { margin-bottom: 0.9rem; }
+
+/* ── top bar ──────────────────────────────────────────────────────── */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: var(--bar) solid var(--ink);
+}
+
+.bar__in { display: flex; align-items: center; justify-content: space-between; gap: 1rem; height: 3rem; }
+
+.bar__mark {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 112, "wght" 900;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.bar__mark sup { font-size: 0.55em; vertical-align: super; }
+.bar__nav { display: flex; gap: 1.25rem; }
+.bar__nav a { text-decoration: none; }
+.bar__nav a:hover { color: var(--terra); }
+
+@media (max-width: 700px) { .bar__nav li:nth-child(-n+2) { display: none; } }
+
+/* ── masthead: the nameplate is set by distribution, never by cropping.
+   Letters are spread with space-between, so the word fits any width. ─ */
+.masthead { border-bottom: var(--bar) solid var(--ink); }
+
+.masthead__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-block: 0.6rem;
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--ink) 30%, var(--paper));
+}
+
+.nameplate {
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+  padding-block: clamp(0.5rem, 1.4vw, 1.1rem) clamp(0.4rem, 1vw, 0.8rem);
+}
+
+.nameplate span {
+  font-family: var(--display);
+  font-variation-settings: "wdth" var(--w, 125), "wght" 900;
+  font-size: min(9vw, 10rem);
+  line-height: 0.8;
+  text-transform: uppercase;
+}
+
+.masthead__sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+}
+
+/* ── lead story ───────────────────────────────────────────────────── */
+.lead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); border-bottom: var(--bar) solid var(--ink); }
+
+.lead__fig { position: relative; border-right: var(--bar) solid var(--ink); overflow: hidden; }
+.lead__fig img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4 / 5; }
+
+.lead__fig figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.lead__body {
+  padding: clamp(1.25rem, 3vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.kicker { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: baseline; }
+
+/* longest word "GRAMATURA" = 9 chars; capped so 9em always fits here */
+.lead__title { font-size: clamp(1.7rem, 4vw, 3.4rem); }
+
+.dek { font-size: 0.9375rem; line-height: 1.65; max-width: 46ch; }
+
+.more {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 108, "wght" 900;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: var(--bar) solid var(--ink);
+  padding-bottom: 0.15rem;
+  align-self: flex-start;
+}
+
+.more:hover { color: var(--terra); border-bottom-color: var(--terra); }
+
+@media (max-width: 860px) {
+  .lead { grid-template-columns: 1fr; }
+  .lead__fig { border-right: 0; border-bottom: var(--bar) solid var(--ink); }
+  .lead__fig img { aspect-ratio: 3 / 2; }
+}
+
+/* ── secondary stories ────────────────────────────────────────────── */
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: var(--bar) solid var(--ink); }
+
+.story {
+  border-right: var(--bar) solid var(--ink);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  text-decoration: none;
+}
+
+.story:last-child { border-right: 0; }
+.story:hover { background: var(--ink); color: var(--paper); }
+.story:hover .dim, .story:hover .acc { color: var(--paper); }
+.story:hover img { filter: invert(1); }
+
+.story img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
+/* longest word "SUBSTITUI" = 9 chars; 9em at 1.75rem = 252px, fits a third column */
+.story__title { font-size: clamp(1.05rem, 1.9vw, 1.75rem); }
+
+@media (max-width: 860px) {
+  .cols { grid-template-columns: 1fr; }
+  .story { border-right: 0; border-bottom: var(--bar) solid var(--ink); }
+  .story:last-child { border-bottom: 0; }
+}
+
+/* ── ticker ───────────────────────────────────────────────────────── */
+.ticker {
+  background: var(--terra);
+  color: var(--paper);
+  border-bottom: var(--bar) solid var(--ink);
+  overflow: hidden;
+  padding-block: 0.6rem;
+}
+
+.ticker__run { display: flex; width: max-content; animation: slide 38s linear infinite; }
+.ticker__run span { padding-inline: 1.25rem; white-space: nowrap; }
+
+/* ── slabs & heads ────────────────────────────────────────────────── */
+.slab { border-bottom: var(--bar) solid var(--ink); padding-block: clamp(2.25rem, 5vw, 4.5rem); }
+.slab--flush { padding-block: 0; }
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.9rem;
+  margin-bottom: clamp(1.25rem, 3vw, 2rem);
+  border-bottom: var(--bar) solid currentColor;
+}
+
+.head h2 { font-size: clamp(1.3rem, 3vw, 2.2rem); }
+
+/* ── comece aqui: a real sequence, so it is numbered ──────────────── */
+.path { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: var(--bar) solid var(--ink); }
+
+.path__step {
+  border-right: var(--bar) solid var(--ink);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.path__step:last-child { border-right: 0; }
+.path__step:hover { background: var(--ink); color: var(--paper); }
+.path__step:hover .dim, .path__step:hover .acc { color: var(--paper); }
+
+.path__n { font-family: var(--display); font-variation-settings: "wdth" 100, "wght" 900; font-size: 1.6rem; line-height: 1; }
+.path__t { font-size: clamp(0.95rem, 1.5vw, 1.2rem); }
+
+@media (max-width: 860px) {
+  .path { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .path__step:nth-child(2n) { border-right: 0; }
+  .path__step:nth-child(-n+2) { border-bottom: var(--bar) solid var(--ink); }
+}
+
+@media (max-width: 480px) {
+  .path { grid-template-columns: 1fr; }
+  .path__step { border-right: 0; border-bottom: var(--bar) solid var(--ink); }
+  .path__step:last-child { border-bottom: 0; }
+}
+
+/* ── matéria: photographs as evidence, captioned like specimens ───── */
+.strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-bottom: var(--bar) solid var(--ink); }
+
+.plate { position: relative; overflow: hidden; border-right: var(--bar) solid var(--ink); }
+.strip .plate { aspect-ratio: 4 / 5; }
+.strip .plate:last-child { border-right: 0; }
+.plate img { width: 100%; height: 100%; object-fit: cover; }
+
+.plate figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: background 60ms linear;
+}
+
+.plate:hover figcaption { background: var(--terra); }
+
+@media (max-width: 860px) {
+  .strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .strip .plate:nth-child(2n) { border-right: 0; }
+  .strip .plate:nth-child(-n+2) { border-bottom: var(--bar) solid var(--ink); }
+}
+
+/* ── critério ─────────────────────────────────────────────────────── */
+.triad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: var(--bar) solid var(--ink); }
+.triad > div { border-right: var(--bar) solid var(--ink); padding: clamp(1.25rem, 2.5vw, 2rem); }
+.triad > div:last-child { border-right: 0; }
+.triad h3 { font-size: clamp(1.25rem, 2.6vw, 1.9rem); }
+.triad__q { font-family: var(--display); font-variation-settings: "wdth" 100, "wght" 800; font-size: clamp(1rem, 1.7vw, 1.3rem); text-transform: uppercase; color: var(--terra); margin-block: 0.7rem 0.9rem; }
+.triad p { font-size: 0.8125rem; }
+
+@media (max-width: 780px) {
+  .triad { grid-template-columns: 1fr; }
+  .triad > div { border-right: 0; border-bottom: var(--bar) solid var(--ink); }
+  .triad > div:last-child { border-bottom: 0; }
+}
+
+/* ── dark slab, textured with real cloth ──────────────────────────── */
+.slab--ink { background: var(--ink); color: var(--paper); border-bottom-color: var(--ink); position: relative; overflow: hidden; }
+.slab__tex { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.22; }
+.slab--ink > .shell { position: relative; z-index: 1; }
+.slab--ink .dim { color: color-mix(in oklab, var(--paper) 66%, var(--ink)); }
+
+.shout {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 108, "wght" 900;
+  font-size: clamp(1.9rem, 6.6vw, 5.4rem);
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+.lead-p { max-width: 54ch; margin-top: clamp(1.25rem, 3vw, 2rem); font-size: 0.9375rem; }
+.lead-p + .lead-p { margin-top: 1rem; }
+
+/* ── índice ───────────────────────────────────────────────────────── */
+.row {
+  display: grid;
+  grid-template-columns: 3.25rem 3.25rem minmax(0, 1fr) minmax(0, 9rem) 4.5rem;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  align-items: center;
+  padding: clamp(0.7rem, 1.6vw, 1rem) 0.75rem;
+  margin-inline: -0.75rem;
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--ink) 25%, var(--paper));
+  text-decoration: none;
+  transition: background 60ms linear, color 60ms linear;
+}
+
+.row:hover { background: var(--ink); color: var(--paper); }
+.row:hover .dim, .row:hover .acc { color: var(--paper); }
+.row:hover .row__img { filter: invert(1); }
+
+.row__img { width: 3.25rem; height: 3.25rem; object-fit: cover; }
+.row__n { font-family: var(--display); font-variation-settings: "wdth" 100, "wght" 900; font-size: 0.9375rem; font-variant-numeric: tabular-nums; }
+.row__t { font-family: var(--display); font-variation-settings: "wdth" 102, "wght" 700; font-size: clamp(0.95rem, 1.7vw, 1.3rem); text-transform: uppercase; letter-spacing: -0.02em; line-height: 1.1; overflow-wrap: break-word; }
+.row__k, .row__d { font-size: 0.6875rem; text-transform: uppercase; }
+.row__d { text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 860px) {
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; }
+  .row__img { width: 3rem; height: 3rem; }
+  .row__t { flex: 1 1 100%; }
+  .row__d { margin-left: auto; }
+}
+
+/* ── método ───────────────────────────────────────────────────────── */
+.method { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(1.5rem, 4vw, 4rem); }
+
+.step {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: baseline;
+  padding-block: 0.8rem;
+  border-bottom: var(--hair) solid color-mix(in oklab, var(--ink) 25%, var(--paper));
+}
+
+.step__n { font-family: var(--display); font-variation-settings: "wdth" 100, "wght" 900; font-size: 0.9375rem; }
+.step__t { font-family: var(--display); font-variation-settings: "wdth" 104, "wght" 800; font-size: clamp(0.9rem, 1.4vw, 1.05rem); text-transform: uppercase; line-height: 1.1; overflow-wrap: break-word; }
+.step__d { font-size: 0.75rem; margin-top: 0.25rem; }
+
+@media (max-width: 780px) { .method { grid-template-columns: 1fr; } }
+
+/* ── wide plate ───────────────────────────────────────────────────── */
+.band { position: relative; border-bottom: var(--bar) solid var(--ink); overflow: hidden; }
+.band img { width: 100%; height: clamp(180px, 26vw, 380px); object-fit: cover; }
+.band figcaption { position: absolute; left: 0; bottom: 0; background: var(--ink); color: var(--paper); padding: 0.6rem 1rem; }
+
+/* ── a carta ──────────────────────────────────────────────────────── */
+.carta { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); border-bottom: var(--bar) solid var(--ink); }
+.carta__left { background: var(--ink); color: var(--paper); padding: clamp(1.5rem, 4vw, 3.5rem); }
+.carta__right { padding: clamp(1.5rem, 4vw, 3.5rem); }
+.carta h2 { font-size: clamp(2.2rem, 7vw, 5rem); }
+.carta__lede { margin-top: 1.1rem; max-width: 30ch; font-size: 0.9375rem; }
+
+.form { display: flex; margin-top: 1.75rem; border: var(--bar) solid var(--paper); }
+
+.form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--mono);
+  font-variation-settings: "wdth" 85, "wght" 400;
+  font-size: 0.8125rem;
+  padding: 0.85rem 1rem;
+  color: var(--paper);
+  background: transparent;
+  border: 0;
+}
+
+.form input::placeholder { color: color-mix(in oklab, var(--paper) 55%, var(--ink)); }
+.form input:focus { outline: 0; background: color-mix(in oklab, var(--paper) 12%, var(--ink)); }
+
+.form button {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 108, "wght" 900;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  padding: 0.85rem 1.5rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0;
+  cursor: pointer;
+}
+
+.form button:hover { background: var(--terra); color: var(--paper); }
+.form__done { font-family: var(--display); font-variation-settings: "wdth" 108, "wght" 900; font-size: 0.9375rem; text-transform: uppercase; padding: 0.85rem 1rem; }
+.carta__honest { margin-top: 1rem; font-size: 0.6875rem; line-height: 1.7; max-width: 44ch; color: color-mix(in oklab, var(--paper) 62%, var(--ink)); }
+
+.spec { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 1rem; padding-block: 0.7rem; border-top: var(--hair) solid color-mix(in oklab, var(--ink) 25%, var(--paper)); }
+.spec:last-of-type { border-bottom: var(--hair) solid color-mix(in oklab, var(--ink) 25%, var(--paper)); }
+.spec dd { font-size: 0.8125rem; }
+
+@media (max-width: 860px) {
+  .carta { grid-template-columns: 1fr; }
+  .spec { grid-template-columns: 1fr; gap: 0.15rem; }
+}
+
+/* ── colofão ──────────────────────────────────────────────────────── */
+.colofao { padding-block: clamp(1.5rem, 3.5vw, 2.75rem); }
+.colofao__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: clamp(1.25rem, 3vw, 2.5rem); }
+.colofao p { font-size: 0.75rem; line-height: 1.6; margin-top: 0.4rem; }
+.seal-foot { width: 46px; margin-bottom: 0.75rem; animation: turn 90s linear infinite; }
+
+/* ── motion: snappy, never luxurious ──────────────────────────────── */
+@keyframes turn { to { transform: rotate(360deg); } }
+@keyframes slide { to { transform: translateX(-50%); } }
+@property --w { syntax: "<number>"; inherits: false; initial-value: 125; }
+@keyframes fatten { from { --w: 62; opacity: 0; } to { --w: 125; opacity: 1; } }
+
+.nameplate span { animation: fatten 760ms cubic-bezier(0.2, 0.9, 0.2, 1); }
+.nameplate span:nth-child(1) { animation-delay: 0ms; }
+.nameplate span:nth-child(2) { animation-delay: 40ms; }
+.nameplate span:nth-child(3) { animation-delay: 80ms; }
+.nameplate span:nth-child(4) { animation-delay: 120ms; }
+.nameplate span:nth-child(5) { animation-delay: 160ms; }
+.nameplate span:nth-child(6) { animation-delay: 200ms; }
+.nameplate span:nth-child(7) { animation-delay: 240ms; }
+.nameplate span:nth-child(8) { animation-delay: 280ms; }
+.nameplate span:nth-child(9) { animation-delay: 320ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; }
+}
+</style>
+
+<header class="bar">
+  <div class="bar__in shell">
+    <a class="bar__mark" href="#">Allegorio<sup>®</sup></a>
+    <nav>
+      <ul class="bar__nav lbl">
+        <li><a href="#comece">Comece aqui</a></li>
+        <li><a href="#criterio">Critério</a></li>
+        <li><a href="#indice">Índice</a></li>
+        <li><a href="#carta">A carta</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="masthead shell">
+    <div class="masthead__meta lbl">
+      <span class="dim">Nº 001 · MMXXVI</span>
+      <span class="dim">Publicação independente · moda masculina · Brasil</span>
+    </div>
+
+    <h1 class="nameplate" aria-label="Allegorio">
+      <span aria-hidden="true">A</span><span aria-hidden="true">L</span><span aria-hidden="true">L</span><span aria-hidden="true">E</span><span aria-hidden="true">G</span><span aria-hidden="true">O</span><span aria-hidden="true">R</span><span aria-hidden="true">I</span><span aria-hidden="true">O</span>
+    </h1>
+
+    <div class="masthead__sub lbl">
+      <span>Tecido · caimento · proporção · combinação</span>
+      <span class="acc">Fundamentos antes de tendência</span>
+    </div>
+  </section>
+
+  <article class="lead">
+    <figure class="lead__fig">
+      <img src="{{a-cuff}}" alt="Punho de jaqueta jeans com rebites e pesponto duplo, em preto e branco">
+      <figcaption class="lbl"><span>Punho · rebite · pesponto</span><span>Fig. 01</span></figcaption>
+    </figure>
+
+    <div class="lead__body">
+      <div>
+        <p class="kicker lbl"><span class="acc">Fundamentos</span><span class="dim">001</span><span class="dim">11 min</span></p>
+        <h2 class="fat lead__title mt">Gramatura: por que 12&nbsp;oz cai diferente de 6&nbsp;oz</h2>
+      </div>
+
+      <p class="dek dim">
+        A mesma jaqueta em dois pesos de tecido vira duas peças diferentes: uma
+        acompanha o corpo, a outra constrói uma forma própria. O número na etiqueta
+        diz quanto pesa um metro quadrado do tecido — e é ele que decide se a peça
+        cai, arma ou desaba. Aqui a gente mostra o mecanismo, o que muda no calor
+        brasileiro e o que procurar antes de comprar.
+      </p>
+
+      <a class="more" href="#">Ler o artigo →</a>
+    </div>
+  </article>
+
+  <div class="cols">
+    <a class="story" href="#">
+      <img src="{{d-pocket}}" alt="Bolso de calça jeans com rebite de cobre">
+      <p class="kicker lbl"><span class="acc">Aplicação</span><span class="dim">002 · 9 min</span></p>
+      <h3 class="fat story__title">A calça decide a silhueta antes da jaqueta</h3>
+      <p class="dim">Todo mundo escolhe a parte de cima primeiro. É por isso que a maioria dos looks não fecha.</p>
+    </a>
+
+    <a class="story" href="#">
+      <img src="{{c-tweed}}" alt="Botões de casaco de lã sobre tecido de espinha de peixe">
+      <p class="kicker lbl"><span class="acc">Peças</span><span class="dim">003 · 14 min</span></p>
+      <h3 class="fat story__title">A jaqueta que aposenta o moletom</h3>
+      <p class="dim">Mesma liberdade, mesma temperatura, presença completamente outra. O que olhar no aviamento.</p>
+    </a>
+
+    <a class="story" href="#">
+      <img src="{{e-boot}}" alt="Bota de couro com barra de calça jeans">
+      <p class="kicker lbl"><span class="acc">Análise</span><span class="dim">005 · 16 min</span></p>
+      <h3 class="fat story__title">Onde o dinheiro rende: sapato, calça ou casaco</h3>
+      <p class="dim">Orçamento de R$ 1.500 dividido de três formas. Uma delas muda muito mais o resultado.</p>
+    </a>
+  </div>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker__run lbl">
+      <span>Fundamentos</span><span>·</span><span>Peças</span><span>·</span><span>Aplicação</span><span>·</span><span>Estilos</span><span>·</span><span>Análises</span><span>·</span><span>Sem hype</span><span>·</span><span>Sem afiliado disfarçado</span><span>·</span>
+      <span>Fundamentos</span><span>·</span><span>Peças</span><span>·</span><span>Aplicação</span><span>·</span><span>Estilos</span><span>·</span><span>Análises</span><span>·</span><span>Sem hype</span><span>·</span><span>Sem afiliado disfarçado</span><span>·</span>
+    </div>
+  </div>
+
+  <section class="slab shell" id="comece">
+    <div class="head">
+      <h2 class="fat">Comece aqui</h2>
+      <p class="lbl dim">Quatro leituras · nessa ordem · dá uma tarde</p>
+    </div>
+
+    <div class="path">
+      <a class="path__step" href="#">
+        <span class="path__n acc">01</span>
+        <h3 class="fat path__t">Como um tecido decide o caimento</h3>
+        <p class="dim">Gramatura, fibra e trama, sem jargão.</p>
+      </a>
+      <a class="path__step" href="#">
+        <span class="path__n acc">02</span>
+        <h3 class="fat path__t">Proporção: ombro, cintura, barra</h3>
+        <p class="dim">Os três pontos que o olho lê primeiro.</p>
+      </a>
+      <a class="path__step" href="#">
+        <span class="path__n acc">03</span>
+        <h3 class="fat path__t">Montar uma base de cinco peças</h3>
+        <p class="dim">O que comprar antes de comprar o resto.</p>
+      </a>
+      <a class="path__step" href="#">
+        <span class="path__n acc">04</span>
+        <h3 class="fat path__t">Erros que quase todo mundo comete</h3>
+        <p class="dim">E como cada um deles se corrige.</p>
+      </a>
+    </div>
+  </section>
+
+  <section class="strip" aria-label="Matéria">
+    <figure class="plate">
+      <img src="{{g-weave}}" alt="Trama de sarja vista de perto">
+      <figcaption class="lbl"><span>Sarja · trama</span><span>Fig. 02</span></figcaption>
+    </figure>
+    <figure class="plate">
+      <img src="{{f-linen}}" alt="Tecido de linho escuro">
+      <figcaption class="lbl"><span>Linho · torção</span><span>Fig. 03</span></figcaption>
+    </figure>
+    <figure class="plate">
+      <img src="{{h-coat}}" alt="Lã de casaco em macro">
+      <figcaption class="lbl"><span>Lã · felpa</span><span>Fig. 04</span></figcaption>
+    </figure>
+    <figure class="plate">
+      <img src="{{b-twill-sq}}" alt="Sarja de algodão mostrando o diagonal">
+      <figcaption class="lbl"><span>Sarja 3x1 · diagonal</span><span>Fig. 05</span></figcaption>
+    </figure>
+  </section>
+
+  <section class="slab slab--ink">
+    <img class="slab__tex" src="{{f-linen}}" alt="" aria-hidden="true">
+    <div class="shell">
+      <p class="lbl acc mb">A palavra</p>
+      <h2 class="shout">Alegoria:<br>quando uma coisa<br>quer dizer outra</h2>
+      <p class="lead-p">
+        Os romanos liam as próprias estátuas assim — a figura era uma coisa, o sentido
+        era outra. Roupa funciona igual, e você já está sendo lido: na entrevista, no
+        aniversário da família, na fila do café.
+      </p>
+      <p class="lead-p dim">
+        A diferença entre ser lido e escrever o texto é repertório. É isso que esta
+        publicação entrega, e nada além disso.
+      </p>
+    </div>
+  </section>
+
+  <section class="slab shell" id="criterio">
+    <div class="head">
+      <h2 class="fat">O critério</h2>
+      <p class="lbl dim">Vitrúvio · três perguntas · dois mil anos</p>
+    </div>
+
+    <div class="triad">
+      <div>
+        <h3 class="fat">Firmitas</h3>
+        <p class="triad__q">Aguenta?</p>
+        <p class="dim">Gramatura, costura, forro, aviamento. O que decide se a peça chega inteira no terceiro ano ou vira pano de chão no segundo.</p>
+      </div>
+      <div>
+        <h3 class="fat">Utilitas</h3>
+        <p class="triad__q">Serve pra sua vida?</p>
+        <p class="dim">Seu clima, sua rotina, seu orçamento. Casaco lindo que faz 30 graus lá fora não serve — e a gente diz isso em vez de fingir que você mora em Milão.</p>
+      </div>
+      <div>
+        <h3 class="fat">Venustas</h3>
+        <p class="triad__q">Vale olhar?</p>
+        <p class="dim">Proporção, cor, silhueta. A parte que é preferência editorial — e por isso a única que a gente marca como preferência, não como regra.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slab shell" id="indice">
+    <div class="head">
+      <h2 class="fat">Índice</h2>
+      <p class="lbl dim">Por assunto · não por data</p>
+    </div>
+
+    <div>
+      <a class="row" href="#">
+        <img class="row__img" src="{{t:g-weave}}" alt="Trama de sarja">
+        <span class="row__n acc">001</span>
+        <span class="row__t">Gramatura: por que 12 oz cai diferente de 6 oz</span>
+        <span class="row__k dim">Fundamentos</span>
+        <span class="row__d dim">11 min</span>
+      </a>
+      <a class="row" href="#">
+        <img class="row__img" src="{{t:d-pocket}}" alt="Bolso de calça">
+        <span class="row__n acc">002</span>
+        <span class="row__t">A calça decide a silhueta antes da jaqueta</span>
+        <span class="row__k dim">Aplicação</span>
+        <span class="row__d dim">9 min</span>
+      </a>
+      <a class="row" href="#">
+        <img class="row__img" src="{{t:a-cuff}}" alt="Punho de jaqueta">
+        <span class="row__n acc">003</span>
+        <span class="row__t">A jaqueta que aposenta o moletom</span>
+        <span class="row__k dim">Peças</span>
+        <span class="row__d dim">14 min</span>
+      </a>
+      <a class="row" href="#">
+        <img class="row__img" src="{{t:c-tweed}}" alt="Tecido de lã">
+        <span class="row__n acc">004</span>
+        <span class="row__t">Preto com preto: por que quase sempre falha</span>
+        <span class="row__k dim">Aplicação</span>
+        <span class="row__d dim">8 min</span>
+      </a>
+      <a class="row" href="#">
+        <img class="row__img" src="{{t:e-boot}}" alt="Bota e barra de calça">
+        <span class="row__n acc">005</span>
+        <span class="row__t">Onde o dinheiro rende: sapato, calça ou casaco</span>
+        <span class="row__k dim">Análise</span>
+        <span class="row__d dim">16 min</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="slab shell">
+    <div class="head">
+      <h2 class="fat">O método</h2>
+      <p class="lbl dim">Sete etapas · na ordem · sem pular</p>
+    </div>
+
+    <ol class="method">
+      <li class="step">
+        <span class="step__n acc">01</span>
+        <div><h3 class="step__t">A pergunta</h3><p class="step__d dim">O artigo declara, na primeira linha, o que pretende responder.</p></div>
+      </li>
+      <li class="step">
+        <span class="step__n acc">02</span>
+        <div><h3 class="step__t">O mecanismo</h3><p class="step__d dim">Por que funciona. Regra sem mecanismo é decoreba, e decoreba não vira critério.</p></div>
+      </li>
+      <li class="step">
+        <span class="step__n acc">03</span>
+        <div><h3 class="step__t">Exemplo e contraexemplo</h3><p class="step__d dim">O caso em que funciona e o caso em que quebra. Os dois, sempre.</p></div>
+      </li>
+      <li class="step">
+        <span class="step__n acc">04</span>
+        <div><h3 class="step__t">Fato, convenção, preferência</h3><p class="step__d dim">Gramatura é fato. Botão de baixo aberto é convenção. Barra larga é preferência nossa — e dizemos qual é qual.</p></div>
+      </li>
+      <li class="step">
+        <span class="step__n acc">05</span>
+        <div><h3 class="step__t">Contexto brasileiro</h3><p class="step__d dim">28 graus em maio, frete caro, tabela de tamanho que não bate. Isso muda a resposta.</p></div>
+      </li>
+      <li class="step">
+        <span class="step__n acc">06</span>
+        <div><h3 class="step__t">Os limites</h3><p class="step__d dim">Onde a conclusão para de valer, dito por nós antes de você descobrir sozinho.</p></div>
+      </li>
+      <li class="step">
+        <span class="step__n acc">07</span>
+        <div><h3 class="step__t">A ação</h3><p class="step__d dim">Uma coisa para fazer com o que já está no seu armário, hoje.</p></div>
+      </li>
+    </ol>
+  </section>
+
+  <figure class="band">
+    <img src="{{b-twill-w}}" alt="Sarja de algodão vista de perto, mostrando o diagonal da trama">
+    <figcaption class="lbl">Sarja 3x1 · o diagonal que faz o caimento · 12 oz</figcaption>
+  </figure>
+
+  <section class="carta" id="carta">
+    <div class="carta__left">
+      <p class="lbl mb">Newsletter</p>
+      <h2 class="fat">A carta</h2>
+      <p class="carta__lede">
+        Um e-mail quando sai artigo novo, com a tese resumida e um exemplo
+        que não coube no texto.
+      </p>
+
+      <form class="form">
+        <input type="email" required placeholder="seu@email.com" aria-label="Seu e-mail">
+        <button type="submit">Assinar</button>
+      </form>
+
+      <p class="carta__honest">
+        Ainda não temos número de assinantes para mostrar. Quando tivermos,
+        mostramos o número real.
+      </p>
+    </div>
+
+    <div class="carta__right">
+      <dl>
+        <div class="spec">
+          <dt class="lbl acc">Frequência</dt>
+          <dd class="dim">Acompanha a publicação. Sem calendário artificial para parecer movimento.</dd>
+        </div>
+        <div class="spec">
+          <dt class="lbl acc">Conteúdo</dt>
+          <dd class="dim">A tese em uma página, um exemplo extra e o link para o texto completo.</dd>
+        </div>
+        <div class="spec">
+          <dt class="lbl acc">Não enviamos</dt>
+          <dd class="dim">Promoção, contagem regressiva, link de afiliado disfarçado de recomendação.</dd>
+        </div>
+        <div class="spec">
+          <dt class="lbl acc">Saída</dt>
+          <dd class="dim">Um clique no rodapé. Sem página perguntando se você tem certeza.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="colofao shell">
+    <div id="seal" class="seal-foot" aria-hidden="true"></div>
+    <div class="colofao__grid">
+      <div>
+        <p class="lbl">A marca</p>
+        <p class="dim">O óculo do Panteão reduzido a selo: 16 caixotões, 3 anéis, um furo. Gerado por código — cada peça do acervo recebe a sua variação.</p>
+      </div>
+      <div>
+        <p class="lbl">Imagens</p>
+        <p class="dim">Fotos deste sketch são <strong>provisórias</strong>: acervo Creative Commons via Openverse, tratadas em P&amp;B. Na publicação real, fotografia própria de peças e materiais.</p>
+      </div>
+      <div>
+        <p class="lbl">Afiliados</p>
+        <p class="dim">Quando houver, virão declarados. Comissão nunca decide uma recomendação.</p>
+      </div>
+      <div>
+        <p class="lbl">Tipografia</p>
+        <p class="dim">Archivo Expanded 900 e Martian Mono. Sem serifa em lugar nenhum.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // The mark is a system, not a file: same generator at every size.
+  const vault = (rings, coffers, rIn, gap, inset) => {
+    const W = 200, c = W / 2, rOut = 92;
+    const f = (n) => n.toFixed(2);
+    const P = (r, a) => `${f(c + r * Math.cos(a))} ${f(c + r * Math.sin(a))}`;
+    const step = (Math.PI * 2) / coffers;
+
+    const cell = (r0, r1, s) => {
+      const g0 = (gap / 2 + inset) / r0, g1 = (gap / 2 + inset) / r1;
+      const a0 = s * step, a1 = (s + 1) * step;
+      return `M${P(r1, a0 + g1)}A${f(r1)} ${f(r1)} 0 0 1 ${P(r1, a1 - g1)}`
+           + `L${P(r0, a1 - g0)}A${f(r0)} ${f(r0)} 0 0 0 ${P(r0, a0 + g0)}Z`;
+    };
+
+    let out = "";
+    for (let ring = 0; ring < rings; ring++) {
+      const r0 = rIn * Math.pow(rOut / rIn, ring / rings) + inset;
+      const r1 = rIn * Math.pow(rOut / rIn, (ring + 1) / rings) - inset;
+      for (let s = 0; s < coffers; s++) out += `<path d="${cell(r0, r1, s)}"/>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${W}" fill="currentColor">${out}</svg>`;
+  };
+
+  document.getElementById("seal").innerHTML = vault(3, 16, 36, 4.2, 3);
+
+  // the pointer drives the nameplate's width axis
+  const plate = document.querySelectorAll(".nameplate span");
+  if (matchMedia("(pointer: fine)").matches && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    addEventListener("pointermove", (e) => {
+      const w = (98 + (e.clientX / innerWidth) * 27).toFixed(1);
+      plate.forEach((s) => s.style.setProperty("--w", w));
+    }, { passive: true });
+  }
+
+  document.querySelector(".form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    e.currentTarget.replaceChildren(
+      Object.assign(document.createElement("p"), {
+        className: "form__done",
+        textContent: "Registrado.",
+      })
+    );
+  });
+</script>

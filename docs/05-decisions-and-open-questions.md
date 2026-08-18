@@ -27,7 +27,14 @@ Atualizado em 2026-08-16.
 - Não introduzir Phoenix, autenticação ou banco transacional antes de existir uma necessidade concreta de estado durável, autorização, catálogo mutável ou jobs persistentes.
 - Reavaliar Phoenix como backend de domínio no primeiro desses gatilhos, antes de construir lógica equivalente de produto em Nitro.
 - Preservar Nuxt como frontend SSR/híbrido caso Phoenix seja introduzido futuramente.
-- Trabalhar inicialmente com uma direção visual em marrom e branco e tipografia de caráter arredondado, sem considerar essa identidade encerrada.
+- **Substituída em 2026-08-17:** a direção inicial em marrom e branco com tipografia arredondada foi trocada por uma direção brutalista editorial, descrita abaixo. O marrom sobreviveu como marca, não como superfície.
+- Adotar direção visual brutalista editorial: preto (`#0e0e0c`) sobre branco-quente (`#efede6`), bordas de 2px, zero raio de canto, hover que inverte em 60ms.
+- **Substituída em 2026-08-17:** o marrom como cor de marca foi retirado. A interface passou a ser inteiramente monocromática e a única cor do site vive nas fotografias, que entram dessaturadas e ganham cor conforme sobem na tela.
+- Não usar artefatos fingidos de publicação: numeração de edição, "Fig. N", data em numeral romano ou símbolo de marca registrada antes do registro existir.
+- Adotar Archivo Expanded 900 como display e Martian Mono como texto corrido. Sem serifa em nenhum ponto do site.
+- Adotar como marca o óculo do Panteão reduzido a selo, gerado por código e paramétrico por anéis e caixotões, em vez de um logotipo desenhado.
+- Usar a tríade vitruviana — firmitas, utilitas, venustas — como critério público de análise de peças.
+- Usar fotografia de material e construção com legenda técnica, em vez de lookbook; imagem funciona como prova, não como enfeite.
 - Pretender hospedar o projeto em uma VPS da Hetzner; configuração, dimensionamento e operação continuam em aberto.
 
 ## Hipóteses atuais

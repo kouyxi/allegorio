@@ -1,0 +1,287 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Allegorio — sistema de design
+   Monocromático por decisão. A interface não tem nenhuma cor: hierarquia
+   sai de valor, peso e escala. A única cor do site está nas fotografias,
+   e ela chega conforme a imagem entra na tela.
+   Sem serifa e sem raio de canto em lugar nenhum.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper: #efede6;      /* branco-quente. não é #fff nem lavagem creme */
+  --paper-2: #e5e2d9;
+  --ink: #0e0e0c;
+
+  /* Os papéis de acento continuam existindo como estrutura, mas apontam
+     para os neutros. Trocar estes três valores devolve cor ao site inteiro
+     se um dia a decisão mudar. */
+  --accent: var(--ink);
+  --accent-ink: var(--ink);
+  --on-accent: var(--paper);
+
+  --dim: color-mix(in oklab, var(--ink) 62%, var(--paper));
+  --dim-on-ink: color-mix(in oklab, var(--paper) 66%, var(--ink));
+  --hair-c: color-mix(in oklab, var(--ink) 25%, var(--paper));
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --bar: 2px;            /* uma espessura de borda para tudo */
+  --hair: 1px;
+  --gutter: clamp(0.9rem, 2.4vw, 2rem);
+  --max: 1440px;
+  --bar-h: 2.75rem;      /* altura da barra fixa, usada no scroll-padding */
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--bar-h) + 0.5rem);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-variation-settings: "wdth" 78, "wght" 400;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote {
+  margin: 0;
+}
+
+ul, ol {
+  padding: 0;
+  list-style: none;
+}
+
+a { color: inherit; }
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: var(--bar) solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+/* ── papéis tipográficos ───────────────────────────────────────────────
+   Archivo Expanded 900 gasta ~1em por maiúscula. Todo tamanho de display
+   abaixo foi escolhido para a palavra mais longa da sua coluna caber. */
+
+.fat {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 112, "wght" 900;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  line-height: 0.88;
+  overflow-wrap: break-word;
+}
+
+.lbl {
+  font-family: var(--mono);
+  font-variation-settings: "wdth" 100, "wght" 600;
+  font-size: 0.625rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dim { color: var(--dim); }
+/* sem cor, a ênfase vem de peso: .acc fica cheio, o entorno usa .dim */
+.acc {
+  color: var(--ink);
+  font-variation-settings: "wdth" 100, "wght" 700;
+}
+
+.shell {
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.kicker {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.more {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 108, "wght" 900;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: var(--bar) solid currentColor;
+  padding-bottom: 0.15rem;
+  align-self: flex-start;
+}
+
+.more:hover { color: var(--accent-ink); }
+
+/* ── lajes e cabeçalhos de seção ───────────────────────────────────── */
+
+.slab {
+  border-bottom: var(--bar) solid var(--ink);
+  padding-block: clamp(1.75rem, 3.4vw, 3rem);
+}
+
+.slab--ink {
+  background: var(--ink);
+  color: var(--paper);
+  border-bottom-color: var(--ink);
+  position: relative;
+  overflow: hidden;
+}
+
+.slab--ink .dim { color: var(--dim-on-ink); }
+
+.slab__tex {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.22;
+}
+
+.slab--ink > .shell { position: relative; z-index: 1; }
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.7rem;
+  margin-bottom: clamp(1rem, 2.2vw, 1.5rem);
+  border-bottom: var(--bar) solid currentColor;
+}
+
+.head h2 { font-size: clamp(1.1rem, 2.2vw, 1.6rem); }
+
+.shout {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 108, "wght" 900;
+  font-size: clamp(1.5rem, 4.4vw, 3.4rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  overflow-wrap: break-word;
+}
+
+/* ── fotografia usada como prova: legenda em barra preta ───────────── */
+
+.plate {
+  position: relative;
+  overflow: hidden;
+}
+
+.plate img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.plate figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.5rem 0.7rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  transition: background 60ms linear;
+}
+
+.plate:hover figcaption { background: var(--accent); color: var(--on-accent); }
+
+/* ── movimento ─────────────────────────────────────────────────────────
+   Interação é seca: 60ms, sem easing macio. O que é lento vem do scroll.
+   Tudo abaixo usa animation-timeline: view(), que é nativo e não custa
+   biblioteca nenhuma — onde o navegador não suporta, o conteúdo
+   simplesmente já está no estado final. */
+
+@keyframes turn { to { transform: rotate(360deg); } }
+@keyframes slide { to { transform: translateX(-50%); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* deriva vertical dentro da moldura: a imagem respira enquanto passa */
+@keyframes drift {
+  from { transform: scale(1.12) translateY(-2.2%); }
+  to { transform: scale(1.12) translateY(2.2%); }
+}
+
+/* a assinatura do site: a interface é cinza, e a cor chega junto com a
+   atenção. A foto entra quase dessaturada e abre conforme sobe na tela. */
+@keyframes bloom {
+  from { filter: saturate(0.12) contrast(1.04); }
+  to { filter: saturate(1) contrast(1); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .rise {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 8% entry 78%;
+    }
+
+    .slab__tex {
+      animation: drift linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+
+    .plate img,
+    .story img,
+    .cat__fig img {
+      animation: drift linear both, bloom linear both;
+      animation-timeline: view(), view();
+      animation-range: cover, entry 15% cover 42%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .plate img,
+  .story img,
+  .cat__fig img { filter: none; }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* o eixo de largura da Archivo é dirigido pelo cursor no masthead */
+@property --w {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 125;
+}
+
+@keyframes fatten {
+  from { --w: 62; opacity: 0; }
+  to { --w: 125; opacity: 1; }
+}

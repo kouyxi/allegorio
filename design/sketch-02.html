@@ -1,0 +1,774 @@
+<title>Allegorio Oculus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=EB+Garamond:ital,wght@0,400..700;1,400..500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── tokens ───────────────────────────────────────────────────────────
+   One light world, committed to on purpose: an editorial publication
+   printed on lime plaster. Palette named after Roman building materials
+   rather than a mood board — calx (lime), tufa (volcanic stone),
+   basalt, terra (raw sienna), cinabre (the Pompeian red pigment). */
+:root {
+  --calx:      #ede8da;
+  --tufa:      #dbd2be;
+  --basalt:    #171310;
+  --umbra:     #4a3f34;
+  --terra:     #a97c4a;   /* dome faces, rules — never small text (3:1) */
+  --terra-ink: #6e4f22;   /* the same earth, legible at caption size */
+  --cinabre:   #b03a22;   /* the single mark. never a background wash */
+  --lux:       #fdfaf2;   /* the light in the oculus */
+
+  --rule: color-mix(in oklab, var(--basalt) 18%, transparent);
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --text: "EB Garamond", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --t--1: 0.8125rem;
+  --t-0:  1.0625rem;
+  --t-1:  1.4rem;
+  --t-2:  1.85rem;
+  --t-3:  2.45rem;
+
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --max: 1560px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--calx);
+  color: var(--basalt);
+  font-family: var(--text);
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.55;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+a { color: inherit; }
+
+:focus-visible { outline: 2px solid var(--cinabre); outline-offset: 3px; }
+
+.shell { max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+
+/* epigraphic line: uppercase, interpuncts, wide tracking */
+.epi {
+  font-family: var(--text);
+  font-size: var(--t--1);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: var(--terra-ink);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── nav ──────────────────────────────────────────────────────────── */
+.nav {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 30;
+  padding-block: clamp(1rem, 2.2vw, 1.75rem);
+}
+
+.nav__in { display: flex; align-items: baseline; justify-content: space-between; gap: 1.5rem; }
+
+.nav__mark {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 84, "wght" 800;
+  font-size: var(--t-0);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.nav__links { display: flex; gap: clamp(0.9rem, 2.2vw, 2.25rem); }
+.nav__links a { text-decoration: none; transition: color 160ms ease; }
+.nav__links a:hover { color: var(--cinabre); }
+
+@media (max-width: 700px) { .nav__links li:nth-child(-n+2) { display: none; } }
+
+/* ── hero: you are standing under the dome ────────────────────────── */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.dome {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: grid;
+  place-items: center;
+  /* `translate` composes with the entrance `transform` instead of fighting it */
+  translate: var(--px, 0px) var(--py, 0px);
+  transition: translate 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* light pools at the floor of the rotunda — and keeps the copy legible
+   wherever the coffers happen to land behind it */
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom,
+      color-mix(in oklab, var(--calx) 55%, transparent) 0%,
+      transparent 14%,
+      transparent 46%,
+      color-mix(in oklab, var(--calx) 72%, transparent) 74%,
+      var(--calx) 96%);
+}
+
+.dome__spin, .dome__ring {
+  grid-area: 1 / 1;
+  width: min(104vmin, 1180px);
+  aspect-ratio: 1;
+}
+
+.dome__spin { animation: turn 300s linear infinite; }
+.dome__ring { animation: turn 190s linear infinite reverse; }
+.dome__spin svg, .dome__ring svg { display: block; width: 100%; height: 100%; }
+
+/* the inscription rings the oculus — the one place on the vault that is
+   pure light, so it is also the one place the words stay readable */
+.ring-text {
+  font-family: var(--text);
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  fill: var(--basalt);
+}
+
+.hero__foot {
+  align-self: end;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(0.75rem, 4vw, 4rem);
+  padding-bottom: clamp(1.75rem, 4vw, 3rem);
+}
+
+.hero__foot .epi { grid-column: 1 / -1; margin-bottom: 0.5rem; }
+
+.hero__thesis {
+  font-size: clamp(1.25rem, 2.1vw, 1.75rem);
+  line-height: 1.35;
+  max-width: 34ch;
+  text-wrap: balance;
+}
+
+.hero__thesis em { font-style: italic; color: var(--cinabre); }
+
+.hero__cta { justify-self: end; text-align: right; display: grid; gap: 0.7rem; }
+.hero__cta .mono { color: var(--umbra); }
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  align-self: end;
+  background: var(--basalt);
+  color: var(--calx);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 0.9rem 1.5rem;
+  border: 0;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.button:hover { background: var(--cinabre); }
+
+@media (max-width: 780px) {
+  .hero__foot { grid-template-columns: 1fr; }
+  .hero__cta { justify-self: start; text-align: left; }
+  .button { align-self: start; }
+  .ring-text { font-size: 26px; }
+}
+
+/* ── wordmark band: cropped on purpose ────────────────────────────── */
+.mark {
+  overflow: hidden;
+  border-top: 1px solid var(--cinabre);
+  padding-top: clamp(0.75rem, 1.5vw, 1.25rem);
+  padding-bottom: clamp(1rem, 2vw, 2rem);
+}
+
+.mark h2 {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 76, "wght" 800;
+  /* set to overflow its column on purpose — the crop is the composition.
+     capped in rem so very wide screens crop by a sliver, not by three letters */
+  font-size: min(23.5vw, 21.5rem);
+  line-height: 0.74;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mark__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ── dark band ────────────────────────────────────────────────────── */
+.band { background: var(--basalt); color: var(--calx); padding-block: clamp(3.5rem, 9vw, 7rem); }
+
+.band__in {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: start;
+}
+
+.band h2 {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 82, "wght" 700;
+  font-size: clamp(1.8rem, 5vw, 3.6rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.band p { color: color-mix(in oklab, var(--calx) 84%, var(--basalt)); }
+.band p + p { margin-top: 1rem; }
+.band .epi { color: var(--terra); margin-bottom: 1.25rem; display: block; }
+
+.gloss {
+  border-left: 1px solid var(--terra);
+  padding-left: 1.25rem;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: color-mix(in oklab, var(--calx) 72%, var(--basalt));
+}
+
+@media (max-width: 780px) { .band__in { grid-template-columns: 1fr; } }
+
+/* ── sections ─────────────────────────────────────────────────────── */
+.section { padding-block: clamp(3.5rem, 9vw, 7rem); }
+
+.section__head {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: clamp(1rem, 4vw, 4rem);
+  align-items: baseline;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--basalt);
+  margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.section__head h2 {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 84, "wght" 700;
+  font-size: clamp(1.5rem, 4vw, 2.75rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+.section__head p { color: var(--umbra); max-width: 44ch; justify-self: end; font-size: var(--t-0); }
+
+@media (max-width: 720px) {
+  .section__head { grid-template-columns: 1fr; }
+  .section__head p { justify-self: start; }
+}
+
+/* Vitruvius: the three questions any made object answers */
+.triad { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1px; background: var(--rule); }
+
+.triad__col { background: var(--calx); padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.25rem, 2.5vw, 2rem); }
+
+.triad__lat {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 88, "wght" 700;
+  font-size: var(--t-2);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.triad__q {
+  font-family: var(--text);
+  font-style: italic;
+  font-size: var(--t-1);
+  color: var(--cinabre);
+  margin-block: 0.5rem 1rem;
+}
+
+.triad__col p { color: var(--umbra); font-size: 1rem; }
+
+/* método — a real sequence, numbered in the numerals the name comes from */
+.method__step {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 14rem) minmax(0, 1fr);
+  gap: clamp(0.75rem, 2.5vw, 2.5rem);
+  align-items: baseline;
+  padding-block: clamp(0.9rem, 2vw, 1.4rem);
+  border-bottom: 1px solid var(--rule);
+}
+
+.method__n {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--terra-ink);
+  letter-spacing: 0.08em;
+}
+
+.method__t {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 92, "wght" 600;
+  font-size: var(--t-1);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+.method__d { color: var(--umbra); max-width: 54ch; font-size: 1rem; }
+
+@media (max-width: 720px) {
+  .method__step { grid-template-columns: 2.5rem 1fr; }
+  .method__d { grid-column: 2; }
+}
+
+/* índice */
+.index__row {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) minmax(0, 10rem) 5rem;
+  gap: clamp(0.75rem, 2.5vw, 2rem);
+  align-items: baseline;
+  padding: clamp(0.9rem, 2.2vw, 1.5rem) 0.75rem;
+  margin-inline: -0.75rem;
+  border-bottom: 1px solid var(--rule);
+  text-decoration: none;
+  transition: background 160ms ease;
+}
+
+.index__row:hover { background: var(--tufa); }
+.index__row:hover .index__t { color: var(--cinabre); }
+
+.index__n { font-family: var(--mono); font-size: 0.75rem; color: var(--terra-ink); font-variant-numeric: tabular-nums; }
+.index__t { font-size: var(--t-1); line-height: 1.2; text-wrap: balance; transition: color 160ms ease; }
+.index__k, .index__d { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--umbra); }
+.index__d { text-align: right; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 860px) {
+  .index__row { grid-template-columns: 2.5rem minmax(0, 1fr) auto; }
+  .index__k { grid-column: 2; }
+  .index__d { grid-column: 3; align-self: start; }
+}
+
+/* ── a carta ──────────────────────────────────────────────────────── */
+.carta { background: var(--tufa); border-block: 1px solid var(--basalt); }
+
+.carta__in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding-block: clamp(3rem, 8vw, 6rem);
+}
+
+.carta h2 {
+  font-family: var(--display);
+  font-variation-settings: "wdth" 78, "wght" 800;
+  font-size: clamp(3rem, 11vw, 8rem);
+  line-height: 0.82;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+}
+
+.carta__lede { margin-top: 1.25rem; max-width: 32ch; font-size: var(--t-1); line-height: 1.4; }
+
+.carta__spec {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr);
+  gap: 1rem;
+  padding-block: 0.8rem;
+  border-top: 1px solid var(--rule);
+}
+
+.carta__spec:last-of-type { border-bottom: 1px solid var(--rule); }
+.carta__spec dt { font-family: var(--mono); font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--terra-ink); padding-top: 0.25rem; }
+.carta__spec dd { font-size: 1rem; line-height: 1.45; }
+
+.form { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1.75rem; }
+
+.form input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  padding: 0.9rem 1rem;
+  color: var(--basalt);
+  background: var(--calx);
+  border: 1px solid var(--basalt);
+  border-radius: 0;
+}
+
+.form input::placeholder { color: color-mix(in oklab, var(--basalt) 62%, var(--calx)); }
+
+.form__done { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cinabre); padding-block: 0.9rem; }
+
+.carta__honest { margin-top: 1rem; font-family: var(--mono); font-size: 0.6875rem; line-height: 1.7; color: var(--umbra); max-width: 44ch; }
+
+@media (max-width: 860px) {
+  .carta__in { grid-template-columns: 1fr; }
+  .carta__spec { grid-template-columns: 1fr; gap: 0.2rem; }
+}
+
+/* ── colofão ──────────────────────────────────────────────────────── */
+.colofao { padding-block: clamp(2.5rem, 6vw, 4rem); }
+.colofao__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr)); gap: clamp(1.5rem, 3vw, 3rem); }
+.colofao .epi { display: block; margin-bottom: 0.5rem; }
+.colofao p { font-size: 0.9375rem; color: var(--umbra); line-height: 1.5; }
+.colofao hr { border: 0; border-top: 1px solid var(--basalt); margin: 0 0 clamp(1.5rem, 3vw, 2.5rem); }
+
+/* ── motion ───────────────────────────────────────────────────────── */
+@keyframes turn { to { transform: rotate(360deg); } }
+@keyframes lift { from { opacity: 0; transform: translateY(0.75rem); } to { opacity: 1; transform: none; } }
+@keyframes open { from { opacity: 0; transform: scale(0.93); } to { opacity: 1; transform: none; } }
+
+.dome { animation: open 1600ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.nav { animation: lift 900ms ease-out 400ms both; }
+.hero__foot { animation: lift 900ms ease-out 600ms both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; }
+  .dome { transform: none !important; translate: none !important; }
+}
+</style>
+
+<header class="nav">
+  <div class="nav__in shell">
+    <a class="nav__mark" href="#">Allegorio</a>
+    <nav>
+      <ul class="nav__links epi">
+        <li><a href="#criterio">Critério</a></li>
+        <li><a href="#metodo">Método</a></li>
+        <li><a href="#indice">Índice</a></li>
+        <li><a href="#carta">A carta</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="dome" aria-hidden="true">
+      <div class="dome__spin" id="dome"></div>
+      <div class="dome__ring">
+        <svg viewBox="0 0 1000 1000">
+          <defs><path id="ringpath" d="M500 388a112 112 0 1 1 0 224 112 112 0 1 1 0-224"></path></defs>
+          <text class="ring-text">
+            <textPath href="#ringpath" startOffset="0" textLength="704" lengthAdjust="spacing">Allegoria · o que se veste já significa ·</textPath>
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="hero__veil" aria-hidden="true"></div>
+
+    <div class="hero__foot shell">
+      <p class="epi">Publicação independente · moda masculina · Brasil · MMXXVI</p>
+      <p class="hero__thesis">
+        Uma jaqueta de trabalho carrega trabalho. Um mocassim carrega ócio.
+        Nenhuma roupa é neutra — <em>e é exatamente por isso que dá para escolher.</em>
+      </p>
+      <div class="hero__cta">
+        <a class="button" href="#carta">Assinar a carta <span aria-hidden="true">→</span></a>
+        <span class="mono">Grátis · sai quando sai artigo novo</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="mark shell">
+    <div class="mark__meta epi">
+      <span>Fundamentos · Peças · Aplicação · Estilos · Análises</span>
+      <span>Streetwear amadurecido por workwear</span>
+    </div>
+    <h2>Allegorio</h2>
+  </section>
+
+  <section class="band">
+    <div class="band__in shell">
+      <div>
+        <span class="epi">A palavra</span>
+        <h2>Alegoria: quando uma coisa quer dizer outra.</h2>
+      </div>
+      <div>
+        <p>
+          Os romanos liam as próprias estátuas assim: a figura era uma coisa, o
+          sentido era outra. Roupa funciona igual, e você já está sendo lido —
+          na entrevista, no aniversário da família, na fila do café.
+        </p>
+        <p>
+          A diferença entre ser lido e escrever o texto é repertório. É isso que
+          esta publicação entrega, e nada além disso.
+        </p>
+        <p class="gloss">
+          allegoría (gr.) — dizer no fórum uma coisa<br>
+          e significar outra. De <em>állos</em>, outro,<br>
+          e <em>agoreúein</em>, falar em público.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell" id="criterio">
+    <div class="section__head">
+      <h2>O critério</h2>
+      <p>Vitrúvio julgava um edifício por três coisas. Roupa também é construção — as três continuam servindo, e toda análise daqui responde as três.</p>
+    </div>
+
+    <div class="triad">
+      <div class="triad__col">
+        <h3 class="triad__lat">Firmitas</h3>
+        <p class="triad__q">Aguenta?</p>
+        <p>Gramatura, costura, forro, aviamento. O que decide se a peça chega inteira no terceiro ano ou vira pano de chão no segundo.</p>
+      </div>
+      <div class="triad__col">
+        <h3 class="triad__lat">Utilitas</h3>
+        <p class="triad__q">Serve pra sua vida?</p>
+        <p>Seu clima, sua rotina, seu orçamento. Casaco lindo que faz 30 graus lá fora não serve — e a gente diz isso em vez de fingir que você mora em Milão.</p>
+      </div>
+      <div class="triad__col">
+        <h3 class="triad__lat">Venustas</h3>
+        <p class="triad__q">Vale olhar?</p>
+        <p>Proporção, cor, silhueta. A parte que é preferência editorial — e por isso a única que a gente marca como preferência, não como regra.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section shell" id="metodo" style="padding-top: 0">
+    <div class="section__head">
+      <h2>O método</h2>
+      <p>Sete etapas, na ordem. Se um texto pula uma delas, ele ainda não está pronto para publicar.</p>
+    </div>
+
+    <ol>
+      <li class="method__step">
+        <span class="method__n">I</span>
+        <h3 class="method__t">A pergunta</h3>
+        <p class="method__d">O artigo declara, na primeira linha, o que pretende responder.</p>
+      </li>
+      <li class="method__step">
+        <span class="method__n">II</span>
+        <h3 class="method__t">O mecanismo</h3>
+        <p class="method__d">Por que funciona. Regra sem mecanismo é decoreba, e decoreba não vira critério.</p>
+      </li>
+      <li class="method__step">
+        <span class="method__n">III</span>
+        <h3 class="method__t">Exemplo e contraexemplo</h3>
+        <p class="method__d">O caso em que funciona e o caso em que quebra. Os dois, sempre.</p>
+      </li>
+      <li class="method__step">
+        <span class="method__n">IV</span>
+        <h3 class="method__t">Fato, convenção, preferência</h3>
+        <p class="method__d">Gramatura é fato. Botão de baixo aberto é convenção. Barra larga é preferência nossa — e dizemos qual é qual.</p>
+      </li>
+      <li class="method__step">
+        <span class="method__n">V</span>
+        <h3 class="method__t">Contexto brasileiro</h3>
+        <p class="method__d">28 graus em maio, frete caro, tabela de tamanho que não bate. Isso muda a resposta.</p>
+      </li>
+      <li class="method__step">
+        <span class="method__n">VI</span>
+        <h3 class="method__t">Os limites</h3>
+        <p class="method__d">Onde a conclusão para de valer, dito por nós antes de você descobrir sozinho.</p>
+      </li>
+      <li class="method__step">
+        <span class="method__n">VII</span>
+        <h3 class="method__t">A ação</h3>
+        <p class="method__d">Uma coisa para fazer com o que já está no seu armário, hoje.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="section shell" id="indice" style="padding-top: 0">
+    <div class="section__head">
+      <h2>Índice</h2>
+      <p>Organizado por assunto, não por cronologia. Comece por onde está a sua dúvida.</p>
+    </div>
+
+    <div>
+      <a class="index__row" href="#">
+        <span class="index__n">001</span>
+        <span class="index__t">Gramatura: por que 12 oz cai diferente de 6 oz</span>
+        <span class="index__k">Fundamentos</span>
+        <span class="index__d">11 min</span>
+      </a>
+      <a class="index__row" href="#">
+        <span class="index__n">002</span>
+        <span class="index__t">A calça decide a silhueta antes da jaqueta</span>
+        <span class="index__k">Aplicação</span>
+        <span class="index__d">9 min</span>
+      </a>
+      <a class="index__row" href="#">
+        <span class="index__n">003</span>
+        <span class="index__t">Jaqueta de trabalho: o que ela substitui no seu armário</span>
+        <span class="index__k">Peças</span>
+        <span class="index__d">14 min</span>
+      </a>
+      <a class="index__row" href="#">
+        <span class="index__n">004</span>
+        <span class="index__t">Preto com preto: por que quase sempre falha</span>
+        <span class="index__k">Aplicação</span>
+        <span class="index__d">8 min</span>
+      </a>
+      <a class="index__row" href="#">
+        <span class="index__n">005</span>
+        <span class="index__t">Onde o dinheiro rende: sapato, calça ou casaco</span>
+        <span class="index__k">Análise</span>
+        <span class="index__d">16 min</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="carta" id="carta">
+    <div class="carta__in shell">
+      <div>
+        <span class="epi">Newsletter</span>
+        <h2>A carta</h2>
+        <p class="carta__lede">
+          Um e-mail quando sai artigo novo, com a tese resumida e um exemplo
+          que não coube no texto.
+        </p>
+
+        <form class="form">
+          <input type="email" required placeholder="seu@email.com" aria-label="Seu e-mail">
+          <button class="button" type="submit">Assinar</button>
+        </form>
+
+        <p class="carta__honest">
+          Ainda não temos número de assinantes para mostrar. Quando tivermos,
+          mostramos o número real.
+        </p>
+      </div>
+
+      <dl>
+        <div class="carta__spec">
+          <dt>Frequência</dt>
+          <dd>Acompanha a publicação. Sem calendário artificial para parecer movimento.</dd>
+        </div>
+        <div class="carta__spec">
+          <dt>Conteúdo</dt>
+          <dd>A tese em uma página, um exemplo extra e o link para o texto completo.</dd>
+        </div>
+        <div class="carta__spec">
+          <dt>Não enviamos</dt>
+          <dd>Promoção, contagem regressiva, link de afiliado disfarçado de recomendação.</dd>
+        </div>
+        <div class="carta__spec">
+          <dt>Saída</dt>
+          <dd>Um clique no rodapé. Sem página perguntando se você tem certeza.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="colofao shell">
+    <hr>
+    <div class="colofao__grid">
+      <div>
+        <span class="epi">A marca</span>
+        <p>O óculo do Panteão: 28 caixotões por anel, cinco anéis, um furo de luz. Gerado por código — cada peça do acervo recebe a sua variação.</p>
+      </div>
+      <div>
+        <span class="epi">Imagens</span>
+        <p>Geometria e diagramas originais. Fotografia própria ou licenciada com crédito. Nunca banco de imagem genérico.</p>
+      </div>
+      <div>
+        <span class="epi">Afiliados</span>
+        <p>Quando houver, virão declarados. Comissão nunca decide uma recomendação.</p>
+      </div>
+      <div>
+        <span class="epi">Tipografia</span>
+        <p>Archivo, EB Garamond e IBM Plex Mono.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // The mark is a system, not a file: 28 coffers per ring, five rings,
+  // one oculus — the Pantheon's real count, drawn to any size.
+  const dome = (rings = 5, coffers = 28) => {
+    const W = 1000, cx = W / 2, cy = W / 2;
+    const rIn = W * 0.135, rOut = W * 0.465;
+    const gap = W * 0.0038, inset = W * 0.011;
+    const f = (n) => n.toFixed(2);
+    const P = (r, a) => `${f(cx + r * Math.cos(a))} ${f(cy + r * Math.sin(a))}`;
+    const step = (Math.PI * 2) / coffers;
+
+    const cell = (r0, r1, s, pad) => {
+      const g0 = (gap / 2 + pad) / r0, g1 = (gap / 2 + pad) / r1;
+      const a0 = s * step, a1 = (s + 1) * step;
+      return `M${P(r1, a0 + g1)}A${f(r1)} ${f(r1)} 0 0 1 ${P(r1, a1 - g1)}`
+           + `L${P(r0, a1 - g0)}A${f(r0)} ${f(r0)} 0 0 0 ${P(r0, a0 + g0)}Z`;
+    };
+
+    let out = "";
+    for (let ring = 0; ring < rings; ring++) {
+      const r0 = rIn * Math.pow(rOut / rIn, ring / rings);
+      const r1 = rIn * Math.pow(rOut / rIn, (ring + 1) / rings);
+      for (let s = 0; s < coffers; s++) {
+        // light enters through the oculus and falls down the vault
+        const mid = (s + 0.5) * step;
+        const t = (Math.cos(mid + Math.PI / 2) + 1) / 2;
+        const faceL = 43 + t * 29 + (rings - ring) * 1.6;
+        out += `<path d="${cell(r0, r1, s, 0)}" fill="hsl(32 ${f(20 - ring * 1.4)}% ${f(faceL)}%)"/>`
+             + `<path d="${cell(r0 + inset, r1 - inset, s, inset)}" fill="hsl(28 24% ${f(8 + t * 7)}%)"/>`;
+      }
+    }
+    return `<svg viewBox="0 0 ${W} ${W}">${out}`
+         + `<circle cx="${cx}" cy="${cy}" r="${f(rIn - gap)}" fill="var(--lux)"/></svg>`;
+  };
+
+  document.getElementById("dome").innerHTML = dome();
+
+  const calm = matchMedia("(prefers-reduced-motion: reduce)");
+  const shell = document.querySelector(".dome");
+
+  if (!calm.matches) {
+    addEventListener("pointermove", (e) => {
+      const x = e.clientX / innerWidth - 0.5;
+      const y = e.clientY / innerHeight - 0.5;
+      shell.style.setProperty("--px", (x * -22).toFixed(1) + "px");
+      shell.style.setProperty("--py", (y * -22).toFixed(1) + "px");
+    }, { passive: true });
+  }
+
+  document.querySelector(".form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    e.currentTarget.replaceChildren(
+      Object.assign(document.createElement("p"), {
+        className: "form__done",
+        textContent: "Inscrição registrada.",
+      })
+    );
+  });
+</script>

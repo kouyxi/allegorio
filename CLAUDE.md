@@ -74,12 +74,52 @@ Exemplos que exigem alerta:
 
 ## Estado da implementação
 
-Existe um scaffold inicial em Nuxt, TypeScript e Nuxt Content. A aplicação ainda não foi lançada e a home definitiva ainda será desenhada.
+A aplicação Nuxt vive em `web/`, fora da raiz, para abrir espaço a um backend Phoenix futuro em diretório irmão. O escopo atual é blog + newsletter. Nada foi lançado.
+
+A home, o índice e a página de artigo já aplicam a direção visual definitiva. O sistema de design está em `web/app/assets/css/main.css`; os sketches que levaram até ele ficaram em `design/`, com `design/build.py` embutindo as imagens para publicação como artifact.
+
+Regras do sistema visual que não devem ser quebradas sem alerta:
+
+- sem serifa em nenhum lugar; display é Archivo Expanded 900, texto é Martian Mono;
+- Archivo em `wdth 125 / wght 900` tem avanço **médio de 0,851em por maiúscula**, e a variação entre letras é grande: `G` 1,012 · `O` 1,008 · `A` 0,954 · `R` 0,943 · `E` 0,860 · `L` 0,786 · `I` 0,395. Não estime "1em por letra": erra 18% para mais e produz display tímido. Para medir a largura exata de uma palavra, baixe o subset latin (o bloco com `U+0000-00FF` na CSS do Google Fonts) e rode:
+
+  ```python
+  from fontTools.ttLib import TTFont
+  from fontTools.varLib.instancer import instantiateVariableFont
+  f = instantiateVariableFont(TTFont("archivo-latin.woff2"), {"wdth": 125, "wght": 900})
+  upem, cmap, hmtx = f["head"].unitsPerEm, f.getBestCmap(), f["hmtx"]
+  em = sum(hmtx[cmap[ord(c)]][0] / upem for c in "PALAVRA")
+  ```
+
+  A largura final é `(em + letter_spacing * n_letras) × font_size`;
+- **a interface é monocromática**: papel, preto e os cinzas derivados, mais nada. A única cor do site está nas fotografias, e ela chega conforme a imagem entra na tela. Os tokens `--accent`, `--accent-ink` e `--on-accent` continuam existindo, apontando para os neutros, caso a decisão mude;
+- sem cor, a hierarquia sai de valor, peso e escala. Ênfase é `.acc` (preto cheio) contra `.dim` no entorno;
+- nada de artefato fingido: sem "Fig. 01", sem número de edição, sem numeral romano de data, sem ® numa marca ainda não registrada. Latim só como etiqueta pequena, nunca como manchete;
+- zero raio de canto, borda única de 2px, transições de 60ms;
+- fotografia entra legendada como prova técnica, nunca como enfeite;
+- as fotos atuais são provisórias (Creative Commons via Openverse) e devem ser trocadas por produção própria.
+
+## Voz e escrita
+
+Registro: profissional, com um pouco de pessoal. Usa "a gente" quando cabe, sem virar diário.
+
+Padrões que denunciam texto de IA e que não devem voltar:
+
+1. travessão (—) no meio da frase; use vírgula, dois pontos ou corte em duas frases;
+2. a fórmula "não é X, é Y" usada como muleta retórica;
+3. tricolon aforístico, ou seja, três frases curtas em paralelo fechando um parágrafo;
+4. listas negativas do tipo "sem hype, sem promoção, sem calendário";
+5. frase curta de efeito encerrando todo parágrafo;
+6. paralelismo perfeito entre itens de uma lista, com todos na mesma forma sintática;
+7. conectivos de ênfase como "e é exatamente por isso que".
+
+O antídoto é variar o comprimento das frases, deixar alguma correr mais solta e trocar aforismo por informação concreta.
 
 Decisões técnicas atuais:
 
-- Nuxt é responsável pela publicação, renderização híbrida e frontend;
-- Nuxt Content mantém o conteúdo editorial estruturado no MVP;
+- Nuxt 4 é responsável pela publicação, renderização e frontend;
+- Nuxt Content mantém o conteúdo editorial estruturado no MVP (`web/content/artigos/`);
+- a newsletter grava inscrições em arquivo local (`web/.data/subscribers.jsonl`) via `server/api/subscribe.post.ts`; é provisório e deve ser o primeiro trecho a migrar para Phoenix ou um provedor de e-mail;
 - não existe banco transacional, autenticação ou backend Phoenix nesta fase;
 - Phoenix deve ser reconsiderado quando surgir a primeira necessidade real de estado durável, autorização ou processamento assíncrono persistente;
 - a intenção de hospedagem é uma VPS da Hetzner, ainda sem configuração operacional definida.
