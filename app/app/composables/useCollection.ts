@@ -98,6 +98,25 @@ export function useCollection() {
     if (touched.length) commit(store => store.saveItems(touched))
   }
 
+  /** Desfaz `wearItems`. Recebe o estado anterior de cada peça em vez de só
+   *  decrementar a contagem: um decremento genérico erraria se a peça tivesse
+   *  sido usada em outro lugar entre a marcação e o desfazer, por menor que
+   *  seja a janela. */
+  function unwearItems(anterior: { id: string, lastWornAt?: string, wearCount?: number }[]) {
+    const porId = new Map(anterior.map(entry => [entry.id, entry]))
+    const touched: CollectionItem[] = []
+
+    items.value = items.value.map(item => {
+      const prev = porId.get(item.id)
+      if (!prev) return item
+      const next = { ...item, lastWornAt: prev.lastWornAt, wearCount: prev.wearCount ?? 0 }
+      touched.push(next)
+      return next
+    })
+
+    if (touched.length) commit(store => store.saveItems(touched))
+  }
+
   function addCategory(name: string, kind: Category['kind'], role: RecommendationRole) {
     const category: Category = { id: crypto.randomUUID(), name: name.trim(), kind, role, custom: true }
     categories.value = [...categories.value, category]
@@ -135,7 +154,7 @@ export function useCollection() {
   return {
     items, categories, owned, wishlist, categoryById, itemById, loading, error,
     isRemote: store.isRemote, reload: () => store.load(true),
-    addItem, updateItem, removeItem, markAsOwned, wearItems, uploadImage, dropImage,
+    addItem, updateItem, removeItem, markAsOwned, wearItems, unwearItems, uploadImage, dropImage,
     addCategory, renameCategory, removeCategory, replaceAll, resetDemo
   }
 }

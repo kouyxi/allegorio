@@ -114,7 +114,7 @@ Regras do sistema visual que não devem ser quebradas sem alerta:
   ```
 
   A largura final é `(em + letter_spacing * n_letras) × font_size`;
-- **a interface é monocromática**: papel, preto e os cinzas derivados, mais nada. A única cor do site está nas fotografias, e ela chega conforme a imagem entra na tela. Os tokens `--accent`, `--accent-ink` e `--on-accent` continuam existindo, apontando para os neutros, caso a decisão mude;
+- **a interface é monocromática**: papel, preto e os cinzas derivados, mais nada. A única cor do site está nas fotografias, e ela chega conforme a imagem entra na tela. Os tokens `--accent`, `--accent-ink` e `--on-accent` continuam existindo, apontando para os neutros, caso a decisão mude. **Exceção consciente, 2026-08-19:** o indicador de clima da tela Hoje do aplicativo (`.clima` em `app/app/pages/index.vue`) ganhou gradiente de cor por faixa de temperatura, confirmado pelo fundador depois do alerta. A cor ali é dado (a leitura real do clima), não decoração fixa, fica contida a esse indicador e some no modo manual. Não estender a exceção a outro lugar sem o mesmo alerta;
 - sem cor, a hierarquia sai de valor, peso e escala. Ênfase é `.acc` (preto cheio) contra `.dim` no entorno;
 - nada de artefato fingido: sem "Fig. 01", sem número de edição, sem numeral romano de data, sem ® numa marca ainda não registrada. Latim só como etiqueta pequena, nunca como manchete;
 - zero raio de canto, borda única de 2px, transições de 60ms;

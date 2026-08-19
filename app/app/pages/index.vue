@@ -6,7 +6,7 @@ import {
 } from '~/utils/recommend'
 import { plural, today } from '~/utils/format'
 
-const { items, categories, categoryById, owned, wishlist, wearItems, loading, isRemote } = useCollection()
+const { items, categories, categoryById, owned, wishlist, wearItems, unwearItems, loading, isRemote } = useCollection()
 const perfil = useProfile()
 
 /* Primeiro nome só, e só com conta: "Oi, Victor" cabe na linha do rodapé da
@@ -16,7 +16,7 @@ const primeiroNome = computed(() => {
   if (!isRemote.value) return ''
   return perfil.displayName.value.trim().split(/\s+/)[0] ?? ''
 })
-const { outfits, record, wornToday } = useOutfits()
+const { outfits, record, wornToday, removeOutfit } = useOutfits()
 const {
   leitura: leituraClima,
   carregando: climaCarregando,
@@ -29,8 +29,10 @@ const repetir = useRepetir()
 /* O baralho existe para que a resposta à pergunta "e se não for essa?" seja um
    gesto, não um botão e uma espera. Ele nunca mostra a mesma combinação duas
    vezes: com acervo pequeno o motor cicla, então as repetições são descartadas
-   e o baralho encolhe em vez de fingir variedade. */
-const DECK_MAX = 5
+   e o baralho encolhe em vez de fingir variedade. Três cartões, não cinco: a
+   partir do quarto a escolha vira ruído, e ninguém compara cinco opções antes
+   de decidir o que vestir. */
+const DECK_MAX = 3
 const SEEDS = 10
 
 const contextId = ref(defaultContextId())
@@ -101,6 +103,8 @@ function reset() {
   overrides.value = {}
   wornSeed.value = null
   wornAt.value = null
+  wornOutfitId.value = null
+  wornSnapshot.value = []
   goToCard(0, false)
 }
 
@@ -188,12 +192,38 @@ function unpin(role: RecommendationRole) {
 }
 
 /* --- registrar uso --- */
+const wornOutfitId = ref<string | null>(null)
+const wornSnapshot = ref<{ id: string, lastWornAt?: string, wearCount?: number }[]>([])
+
 function wearToday() {
   if (wornSeed.value === active.value || !activeLook.value.items.length) return
+
+  /* O estado anterior de cada peça vai guardado antes da gravação, porque
+     desfazer precisa devolver exatamente esse estado, e não um genérico
+     "nunca usada": a peça pode já ter uso de dias anteriores. */
+  wornSnapshot.value = activeLook.value.items.map(item => ({
+    id: item.id,
+    lastWornAt: item.lastWornAt,
+    wearCount: item.wearCount
+  }))
   wearItems(activeLook.value.items.map(item => item.id))
-  record(contextId.value, climate.value, activeLook.value, true)
+  const outfit = record(contextId.value, climate.value, activeLook.value, true)
+
+  wornOutfitId.value = outfit.id
   wornSeed.value = active.value
   wornAt.value = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+}
+
+function desfazerUso() {
+  if (wornSeed.value !== active.value || !wornOutfitId.value) return
+
+  removeOutfit(wornOutfitId.value)
+  unwearItems(wornSnapshot.value)
+
+  wornOutfitId.value = null
+  wornSnapshot.value = []
+  wornSeed.value = null
+  wornAt.value = null
 }
 
 onMounted(() => nextTick(onDeckScroll))
@@ -215,10 +245,29 @@ useHead({
     </header>
 
     <template v-if="hasCollection">
+      <!-- a situação decide o look, então fica colada nele, e não depois de
+           rolar por baixo do baralho inteiro -->
+      <section class="situacao rise rise-1">
+        <div class="chip-row chip-row--bleed" data-hscroll role="group" aria-label="Situação">
+          <button
+            v-for="entry in RECOMMENDATION_CONTEXTS"
+            :key="entry.id"
+            type="button"
+            class="chip"
+            :aria-pressed="contextId === entry.id"
+            @click="contextId = entry.id"
+          >
+            <AppIcon :name="CONTEXT_ICONS[entry.id] ?? 'spark'" size="1rem" />
+            {{ entry.label }}
+          </button>
+        </div>
+        <p class="situacao__nota">{{ context.description }}</p>
+      </section>
+
       <!-- o baralho: arrastar troca a combinação inteira -->
       <div
         ref="deck"
-        class="deck rise rise-1"
+        class="deck rise rise-2"
         :class="{ 'deck--single': total === 1 }"
         data-hscroll
         aria-label="Combinações sugeridas"
@@ -238,7 +287,7 @@ useHead({
         />
       </div>
 
-      <div v-if="total > 1" class="deck__foot rise rise-2">
+      <div v-if="total > 1" class="deck__foot rise rise-3">
         <div class="dots" role="tablist" aria-label="Combinação">
           <button
             v-for="(look, i) in looks"
@@ -258,7 +307,7 @@ useHead({
         </span>
       </div>
 
-      <section v-if="activeLook.reasons.length" class="why rise rise-3" aria-live="polite">
+      <section v-if="activeLook.reasons.length" class="why rise rise-4" aria-live="polite">
         <p class="why__title">
           <AppIcon name="info" size="0.9375rem" :weight="2" />
           <span class="label dimmer">Por quê</span>
@@ -268,24 +317,34 @@ useHead({
         </ul>
       </section>
 
-      <div class="home__actions rise rise-4">
+      <div class="home__actions rise rise-5">
         <button
           type="button"
           class="btn"
           :class="{ 'btn--ghost': wornSeed === active }"
-          :disabled="!activeLook.items.length"
+          :disabled="!activeLook.items.length || wornSeed === active"
           @click="wearToday"
         >
           <AppIcon :name="wornSeed === active ? 'clock' : 'check'" size="1.0625rem" />
           {{ wornSeed === active ? `Registrado às ${wornAt}` : 'Usei hoje' }}
         </button>
-        <button v-if="total > 1" type="button" class="btn btn--ghost btn--icon" aria-label="Próxima combinação" @click="nextCard">
+        <button
+          v-if="wornSeed === active"
+          type="button"
+          class="btn btn--ghost btn--icon"
+          aria-label="Desfazer registro de uso"
+          @click="desfazerUso"
+        >
+          <AppIcon name="undo" size="1.0625rem" />
+        </button>
+        <button v-else-if="total > 1" type="button" class="btn btn--ghost btn--icon" aria-label="Próxima combinação" @click="nextCard">
           <AppIcon name="shuffle" size="1.0625rem" />
         </button>
       </div>
 
       <p v-if="wornAt" class="home__hint rise">
         As peças ficam com registro de uso de hoje, então as próximas sugestões dão a vez a outras.
+        Marcou sem querer? É só desfazer, ali em cima.
       </p>
       <p v-else-if="wornToday" class="home__hint rise">
         Você já registrou um look hoje.
@@ -304,28 +363,20 @@ useHead({
           </button>
         </div>
 
-        <div class="chip-row chip-row--bleed" data-hscroll role="group" aria-label="Situação">
-          <button
-            v-for="entry in RECOMMENDATION_CONTEXTS"
-            :key="entry.id"
-            type="button"
-            class="chip"
-            :aria-pressed="contextId === entry.id"
-            @click="contextId = entry.id"
-          >
-            <AppIcon :name="CONTEXT_ICONS[entry.id] ?? 'spark'" size="1rem" />
-            {{ entry.label }}
-          </button>
-        </div>
-
-        <p class="tune__note">{{ context.description }}</p>
-
-        <!-- a temperatura chega sozinha; o seletor existe para discordar dela -->
-        <p class="clima" :class="{ 'clima--vivo': leituraClima?.disponivel && !climaManual }">
-          <AppIcon :name="CLIMATE_ICONS[climate]" size="0.9375rem" :weight="2.1" />
-          <span class="clima__texto">{{ climaTexto }}</span>
-          <button v-if="climaManual" type="button" class="link-quiet" @click="voltarAoAutomatico">
-            Voltar ao automático
+        <!-- a temperatura chega sozinha; o seletor existe para discordar dela.
+             O fundo muda com a leitura real (calor, ameno ou frio), e por isso
+             é a única concessão de cor da interface: é dado, não decoração fixa.
+             No manual ele desaparece de propósito, para não fingir que aquilo
+             ainda é uma leitura do tempo. -->
+        <p class="clima" :class="climaManual ? 'clima--manual' : `clima--${climate}`">
+          <AppIcon :name="climaManual ? 'pencil' : CLIMATE_ICONS[climate]" size="0.9375rem" :weight="2.1" />
+          <span class="clima__texto">
+            <template v-if="climaManual">Ajustado à mão · {{ CLIMATE_LABELS[climate] }}</template>
+            <template v-else>{{ climaTexto }}</template>
+          </span>
+          <button v-if="climaManual" type="button" class="clima__voltar" @click="voltarAoAutomatico">
+            <AppIcon name="undo" size="0.8125rem" :weight="2.2" />
+            Automático
           </button>
           <button
             v-else-if="!leituraClima?.disponivel && !climaCarregando"
@@ -422,9 +473,15 @@ useHead({
 </template>
 
 <style scoped>
-.home__head { margin-bottom: var(--s7); }
+/* +4px sobre o --s7 padrão: a seção seguinte (situação, depois o baralho)
+   estava colada de mais no cabeçalho. */
+.home__head { margin-bottom: calc(var(--s7) + var(--s1)); }
 .home__date { display: flex; align-items: center; gap: var(--s1); }
 .home__head h1 { margin-top: var(--s2); max-width: 11ch; }
+
+/* --- situação --- */
+.situacao { margin-bottom: var(--s6); }
+.situacao__nota { min-height: 2.25rem; margin-top: var(--s2); color: var(--ink-3); font-size: var(--fs-xs); line-height: 1.45; }
 
 /* --- baralho --- */
 .deck {
@@ -502,25 +559,84 @@ useHead({
 
 /* --- ajuste --- */
 .tune { margin-top: var(--s9); }
-.tune__note { min-height: 2.25rem; margin-block: var(--s3); color: var(--ink-3); font-size: var(--fs-xs); line-height: 1.45; }
 .tune__fonte { margin-top: var(--s2); color: var(--ink-4); font-size: 0.625rem; letter-spacing: 0.01em; }
 
+/* O fundo por clima é a única concessão de cor da interface, e é consciente:
+   quebra a regra de monocromia do sistema visual porque aqui a cor é dado, a
+   leitura real de temperatura, e não enfeite solto. Fica contida neste
+   indicador só, não vaza para o resto da tela. Cada variante é uma camada de
+   gradiente mais grão por cima, para ler como luz e não como ícone plano de
+   clima; automático mostra o clima, manual apaga a variante e volta a preto
+   fechado, porque naquele estado o valor não é mais uma leitura de verdade. */
 .clima {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: var(--s2);
   margin-bottom: var(--s3);
-  padding: var(--s2) var(--s3);
+  padding: var(--s3);
   border-radius: var(--r-md);
-  background: var(--paper-2);
-  color: var(--ink-3);
+  color: var(--ink);
   font-size: var(--fs-xs);
-  box-shadow: var(--sh-inset);
+  box-shadow: inset 0 0 0 1px rgb(20 18 15 / 8%), var(--sh-1);
+  transition: color var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
-.clima--vivo { color: var(--ink-2); }
-.clima--vivo .ico { color: var(--ink); }
-.clima__texto { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.clima::before,
+.clima::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.clima::after {
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+}
+.clima--hot::before {
+  background:
+    radial-gradient(120% 150% at 84% -25%, rgb(255 205 130 / 88%), transparent 62%),
+    linear-gradient(155deg, #ffe6ba 0%, #ffd8a0 32%, #f6c78a 66%, var(--paper-2) 100%);
+}
+.clima--mild::before {
+  background:
+    radial-gradient(120% 150% at 20% -30%, rgb(255 255 255 / 60%), transparent 58%),
+    linear-gradient(155deg, #d9e5e9 0%, #cddadf 38%, #e2e9eb 74%, var(--paper-2) 100%);
+}
+.clima--cold::before {
+  background:
+    radial-gradient(120% 150% at 50% -35%, rgb(255 255 255 / 75%), transparent 58%),
+    linear-gradient(155deg, #d4e2ee 0%, #c2d5e5 34%, #e8eef4 72%, var(--paper-2) 100%);
+}
+.clima--manual {
+  color: var(--ink-inv);
+  box-shadow: var(--sh-1);
+}
+.clima--manual::before { background: var(--ink); }
+.clima--manual::after { display: none; }
+.clima--manual .ico { color: var(--ink-inv); }
+
+.clima__texto { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-variation-settings: "wght" 560; }
 .clima .link-quiet { min-height: auto; margin-left: auto; white-space: nowrap; }
+.clima__voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  padding: var(--s1) var(--s2);
+  border: 1px solid rgb(251 249 244 / 32%);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--ink-inv);
+  font-size: var(--fs-micro);
+  font-variation-settings: "wght" 650;
+  white-space: nowrap;
+  transition: background var(--t-fast) var(--ease);
+}
+.clima__voltar:hover { background: rgb(251 249 244 / 14%); }
+.clima__voltar:active { transform: scale(0.96); }
 
 /* --- histórico --- */
 .hist-link {

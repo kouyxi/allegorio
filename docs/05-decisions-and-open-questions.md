@@ -97,6 +97,20 @@ Atualizado em 2026-08-18.
 - Usar `profiles.display_name`, que já existia no esquema sem escrita nenhuma,
   para um nome de exibição editável em Ajustes e usado na saudação da tela de
   hoje.
+- Mover o seletor de situação para logo abaixo do cabeçalho da tela Hoje, antes
+  do baralho de looks. Escolher a ocasião é o que decide o look inteiro, então
+  precede a sugestão, e não fica atrás dela como ajuste de segunda ordem.
+- Reduzir o baralho de cinco para três cartões por combinação. A partir do
+  quarto, comparar vira ruído.
+- Oferecer desfazer em "Usei hoje": o registro no histórico e o carimbo de uso
+  nas peças agora voltam ao estado exato de antes, e não a um genérico "nunca
+  usada", porque a peça pode já ter uso de dias anteriores.
+- **Exceção consciente ao guardrail de monocromia do aplicativo**, registrada
+  em CLAUDE.md: o indicador de clima da tela Hoje ganhou gradiente de cor por
+  faixa de temperatura (calor, ameno, frio), com o fundador confirmando depois
+  do alerta de desvio. A cor é a leitura real do clima, não decoração fixa; fica
+  contida a esse indicador e desaparece no modo manual, que volta a preto
+  fechado porque naquele estado o valor deixou de ser uma leitura de verdade.
 
 ## Hipóteses atuais
 

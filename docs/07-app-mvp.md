@@ -145,9 +145,16 @@ técnico no lugar das fotos.
 
 Redesenhada do zero em 2026-08-18. A regra de arquitetura da tela é que o valor
 chega antes da pergunta: a home abre com o look já montado, usando o dia da
-semana como palpite de situação, e os controles de situação e clima ficam
-abaixo da sugestão. A versão anterior pedia três decisões em sequência antes de
-mostrar qualquer coisa, o que contraria a promessa de não ter que decidir.
+semana como palpite de situação. A versão anterior pedia três decisões em
+sequência antes de mostrar qualquer coisa, o que contraria a promessa de não
+ter que decidir.
+
+Em 2026-08-19 o seletor de situação subiu para logo abaixo do cabeçalho, antes
+do baralho. A ideia original mandava rolar a tela inteira para trocar de
+ocasião, o que inverte a ordem certa: escolher entre dia a dia, trabalho,
+encontro ou evento é o que decide o look inteiro, então precede a sugestão. O
+clima continua abaixo, na seção "Ajustar", porque hoje ele é automático e
+raramente pede intervenção.
 
 Decisões de interação que sustentam isso:
 
@@ -166,11 +173,13 @@ Decisões de interação que sustentam isso:
   com cinco fatias: `Hoje · Acervo · (+) · Desejos · Ajustes`. O botão central é
   ação e não destino, então ele fica fora da sequência do gesto lateral e vira X
   na própria tela de cadastro;
-- a sugestão é um **baralho horizontal**: cinco combinações já montadas, trocadas
-  por gesto lateral em vez de botão e espera. O baralho nunca repete: as
-  combinações saem de um odômetro de raiz mista sobre as opções de cada papel,
-  então o primeiro cartão é sempre o melhor e cada cartão seguinte troca uma
-  peça ou duas. Com acervo pequeno o baralho encolhe em vez de fingir variedade;
+- a sugestão é um **baralho horizontal**: três combinações já montadas, trocadas
+  por gesto lateral em vez de botão e espera. Eram cinco até 2026-08-19; a
+  partir do quarto cartão comparar vira ruído e ninguém pesa cinco opções antes
+  de decidir o que vestir. O baralho nunca repete: as combinações saem de um
+  odômetro de raiz mista sobre as opções de cada papel, então o primeiro cartão
+  é sempre o melhor e cada cartão seguinte troca uma peça ou duas. Com acervo
+  pequeno o baralho encolhe em vez de fingir variedade;
 - **deslizar na horizontal troca de seção**, com o conteúdo acompanhando o dedo
   e resistindo nas bordas. O eixo do gesto é decidido nos primeiros pixels e
   qualquer rolagem horizontal marcada com `data-hscroll` tem prioridade, para
@@ -184,7 +193,9 @@ Decisões de interação que sustentam isso:
   linhas repetem a mesma frase;
 - "Usei hoje" grava a data de uso nas peças, que é o dado que o recomendador já
   lê para dar a vez a quem está parado. Usar o aplicativo melhora a próxima
-  sugestão;
+  sugestão. É desfazível: o botão de desfazer aparece ao lado assim que o uso é
+  registrado, e devolve cada peça ao estado exato de antes, não a "nunca usada"
+  genérico, porque a peça pode já ter uso de dias anteriores;
 - o formulário de cadastro pede formalidade, clima e situação, porque são os
   três campos que o motor consulta. Sem eles todo item entra com o mesmo peso;
 - abaixo de mais ou menos 48px a peça aparece como amostra de cor sólida, acima
@@ -195,7 +206,13 @@ Decisões de interação que sustentam isso:
   toda manhã, o que contraria a promessa de não ter que decidir nada para receber
   a sugestão. Agora a tela abre com a leitura de agora e o seletor continua ali,
   ganhando do automático quando alguém discorda dele. Discordar desliga o
-  automático até a próxima sessão.
+  automático até a próxima sessão. Até 2026-08-19 a única diferença visual entre
+  automático e manual era um tom de cinza a mais, pouco para perceber de relance.
+  O indicador agora muda de verdade: automático mostra um gradiente por faixa de
+  temperatura (calor, ameno, frio), a única cor fora de fotografia que a
+  interface admite, porque ali a cor é a leitura real do clima. Manual apaga o
+  gradiente e fecha em preto sólido, porque naquele estado o valor deixou de ser
+  uma leitura de verdade.
 
 ## Gesto lateral e toque, corrigidos em 2026-08-19
 
