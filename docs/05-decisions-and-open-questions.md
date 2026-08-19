@@ -82,6 +82,21 @@ Atualizado em 2026-08-18.
 - Retirar o piso de `min-width: 20rem` do `body`. Ele obrigava o documento a
   320px e fazia o conteúdo sair pela esquerda em tela menor, sem barra de
   rolagem que denunciasse o motivo.
+- Declarar `touch-action` explicitamente em `.shell__drag` (`pan-y`) e em
+  `[data-hscroll]` (`pan-x pan-y`), porque a ausência da propriedade era por
+  que o gesto lateral não funcionava em celular: o navegador decidia sozinho
+  que o toque era rolagem antes do primeiro `pointermove`.
+- Neutralizar `-webkit-tap-highlight-color` e `-webkit-touch-callout` em todo
+  `a` e `button`, e não só em `button`. A barra de abas é feita de `NuxtLink`,
+  que ficava de fora da correção anterior.
+- Trocar o service worker de `registerType: 'prompt'` para `'autoUpdate'`. Sem
+  interface de aviso implementada, `prompt` deixava a versão antiga no ar para
+  sempre, o que provavelmente explicava sessão sem login e acervo de
+  demonstração num celular depois de um deploy que corrigiu as chaves do
+  Supabase.
+- Usar `profiles.display_name`, que já existia no esquema sem escrita nenhuma,
+  para um nome de exibição editável em Ajustes e usado na saudação da tela de
+  hoje.
 
 ## Hipóteses atuais
 

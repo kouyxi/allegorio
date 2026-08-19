@@ -6,7 +6,16 @@ import {
 } from '~/utils/recommend'
 import { plural, today } from '~/utils/format'
 
-const { items, categories, categoryById, owned, wishlist, wearItems, loading } = useCollection()
+const { items, categories, categoryById, owned, wishlist, wearItems, loading, isRemote } = useCollection()
+const perfil = useProfile()
+
+/* Primeiro nome só, e só com conta: "Oi, Victor" cabe na linha do rodapé da
+   data, "Oi, Victor Kouichi da Silva" não. Sem sessão remota não existe nome
+   para mostrar, porque o modo local não tem conta, só acervo no aparelho. */
+const primeiroNome = computed(() => {
+  if (!isRemote.value) return ''
+  return perfil.displayName.value.trim().split(/\s+/)[0] ?? ''
+})
 const { outfits, record, wornToday } = useOutfits()
 const {
   leitura: leituraClima,
@@ -200,7 +209,7 @@ useHead({
     <header class="home__head rise">
       <p class="home__date label dimmer">
         <AppIcon name="clock" size="0.875rem" :weight="2.2" />
-        {{ day.weekday }} · {{ day.date }}
+        {{ day.weekday }} · {{ day.date }}{{ primeiroNome ? ` · Oi, ${primeiroNome}` : '' }}
       </p>
       <h1 class="display display-lg">Seu look de hoje</h1>
     </header>

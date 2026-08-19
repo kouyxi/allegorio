@@ -79,7 +79,16 @@ export default defineNuxtConfig({
   },
 
   pwa: {
-    registerType: 'prompt',
+    /* Era `prompt`, que só atualiza quando algum componente chama
+       `updateServiceWorker()` do módulo virtual — e nenhum chamava. Na
+       prática isso deixa o service worker antigo no ar para sempre: ele nota
+       que existe versão nova e fica esperando um sinal que nunca vem. Foi
+       provavelmente o motivo do celular mostrar sessão sem login e acervo de
+       demonstração depois do deploy que corrigiu as chaves do Supabase — o
+       aparelho continuou servindo o pacote antigo, gravado com as chaves
+       vazias, de uma visita anterior. `autoUpdate` troca sozinho assim que
+       percebe build novo, sem precisar de interface de aviso. */
+    registerType: 'autoUpdate',
     manifest: {
       name: 'Allegorio',
       short_name: 'Allegorio',

@@ -7,10 +7,23 @@ const { items, categories, addCategory, renameCategory, removeCategory, resetDem
 const { outfits } = useOutfits()
 const backup = useBackup()
 const { user, configured, signOut } = useAuth()
+const perfil = useProfile()
 
 async function leave() {
   await signOut()
   await navigateTo('/entrar')
+}
+
+/* Rascunho separado do valor salvo, senão cada tecla digitada já reescreveria
+   o nome que aparece no resto do aplicativo antes de existir confirmação. */
+const nomeDraft = ref('')
+const nomeSalvo = ref(false)
+watch(perfil.displayName, valor => { nomeDraft.value = valor }, { immediate: true })
+
+async function salvarNome() {
+  await perfil.save(nomeDraft.value)
+  nomeSalvo.value = true
+  setTimeout(() => { nomeSalvo.value = false }, 2000)
 }
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -149,10 +162,34 @@ useHead({ title: 'Ajustes · Allegorio' })
       <div class="account__row card card--flat">
         <span class="account__copy">
           <span class="label dimmer">Conectado como</span>
-          <strong>{{ user?.email }}</strong>
+          <strong>{{ perfil.displayName.value || user?.email }}</strong>
+          <span v-if="perfil.displayName.value" class="account__email">{{ user?.email }}</span>
         </span>
         <button type="button" class="btn btn--quiet btn--sm" @click="leave">Sair</button>
       </div>
+
+      <label class="field account__nome">
+        <span class="label">Como te chamar</span>
+        <div class="account__nome-row">
+          <input
+            v-model="nomeDraft"
+            class="input"
+            type="text"
+            placeholder="Seu nome"
+            autocomplete="name"
+            @keyup.enter="salvarNome"
+          >
+          <button
+            type="button"
+            class="btn btn--ghost btn--sm"
+            :disabled="nomeDraft.trim() === perfil.displayName.value"
+            @click="salvarNome"
+          >
+            {{ nomeSalvo ? 'Salvo' : 'Salvar' }}
+          </button>
+        </div>
+        <span class="account__nota">É o nome que a tela de hoje usa para te cumprimentar.</span>
+      </label>
     </section>
 
     <section class="data rise rise-4">
@@ -357,6 +394,11 @@ useHead({ title: 'Ajustes · Allegorio' })
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.account__email { overflow: hidden; color: var(--ink-4); font-size: var(--fs-micro); white-space: nowrap; text-overflow: ellipsis; }
+
+.account__nome { margin-top: var(--s3); }
+.account__nome-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2); }
+.account__nota { color: var(--ink-4); font-size: var(--fs-xs); line-height: 1.45; }
 
 .data { margin-top: var(--s7); padding-top: var(--s6); border-top: 1px solid var(--line); }
 .data__note { margin-bottom: var(--s4); color: var(--ink-3); font-size: var(--fs-sm); line-height: 1.55; }

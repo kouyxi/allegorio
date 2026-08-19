@@ -139,9 +139,29 @@ body {
 
 h1, h2, h3, h4, p, ul, ol, figure, dl, dd { margin: 0; }
 ul, ol { padding: 0; list-style: none; }
-a { color: inherit; text-decoration: none; }
+
+/* O flash azul do toque e o menu que aparece ao segurar são coisa do
+   navegador, não do componente: `-webkit-tap-highlight-color` desenha aquele
+   retângulo cinza-azulado por cima de qualquer link tocado, e sem
+   `-webkit-touch-callout: none` segurar um `NuxtLink` (a barra de abas inteira
+   é feita de âncoras) abre o menu de "abrir em nova aba" do sistema. Os dois
+   ficam no reset porque cobrem todo link e botão da casa de uma vez; sem isso
+   cada componente reinventaria a mesma correção. */
+a {
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
 button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
-button { margin: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button {
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
 img { display: block; max-width: 100%; }
 svg { display: block; }
 ::selection { background: var(--ink); color: var(--ink-inv); }
@@ -205,6 +225,17 @@ svg { display: block; }
 /* o conteúdo acompanha o dedo enquanto o gesto lateral não decide */
 .shell__drag { transition: transform var(--t-slow) var(--ease-soft); will-change: transform; }
 .shell__drag--live { transition: none; }
+
+/* `touch-action` é o motivo do gesto lateral não funcionar em toque, e nenhuma
+   correção em JavaScript substitui isto: sem a restrição, o navegador decide
+   sozinho se o toque é rolagem antes mesmo do primeiro `pointermove`, e pode
+   cancelar a sequência de ponteiro no meio do gesto. `pan-y` deixa a rolagem
+   vertical nativa em pé e devolve o eixo horizontal para o `useSwipeNav`.
+   Dentro de `[data-hscroll]` vale o oposto: o baralho e as fileiras de chips
+   rolam sozinhos, então o toque ali precisa ficar livre nos dois eixos, senão
+   a barra de rolagem nativa deles some junto. */
+.shell__drag { touch-action: pan-y; }
+[data-hscroll] { touch-action: pan-x pan-y; }
 
 .icon-btn {
   display: grid;

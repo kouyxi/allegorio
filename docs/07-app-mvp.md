@@ -197,6 +197,38 @@ Decisões de interação que sustentam isso:
   ganhando do automático quando alguém discorda dele. Discordar desliga o
   automático até a próxima sessão.
 
+## Gesto lateral e toque, corrigidos em 2026-08-19
+
+Duas coisas quebravam a ergonomia de toque e nenhuma delas era bug de lógica:
+eram propriedades de CSS que faltavam.
+
+O gesto lateral de trocar de seção não funcionava em celular porque nenhum
+elemento declarava `touch-action`. Sem essa propriedade, o navegador decide
+sozinho se o toque é rolagem antes do primeiro `pointermove` e pode cancelar a
+sequência de ponteiro no meio do gesto — o `useSwipeNav` nunca chegava a travar
+o eixo. `.shell__drag` agora tem `touch-action: pan-y`, que deixa a rolagem
+vertical em pé e devolve o eixo horizontal para o JavaScript; dentro de
+`[data-hscroll]` vale o oposto, porque o baralho e as fileiras de chips rolam
+sozinhos e precisam do toque livre nos dois eixos.
+
+O flash azul ao tocar e o menu ao segurar vinham de `-webkit-tap-highlight-color`
+e da ausência de `-webkit-touch-callout: none` em `a`: a barra de abas inteira é
+feita de `NuxtLink`, e sem essas duas propriedades todo toque nela desenhava o
+retângulo padrão do navegador e todo toque prolongado abria o menu de "abrir em
+nova aba". Os dois entraram no reset, cobrindo link e botão de uma vez.
+
+## Service worker, corrigido em 2026-08-19
+
+`registerType` estava em `prompt`, que só troca de versão quando algum
+componente chama `updateServiceWorker()` do módulo virtual — e nenhum chamava.
+Na prática isso deixava o service worker antigo no ar para sempre: ele notava
+que existia build novo e ficava esperando um sinal que nunca vinha. É a
+explicação mais provável para um celular mostrar sessão sem exigir login e
+acervo de demonstração depois do deploy que corrigiu as chaves do Supabase — o
+aparelho continuou servindo o pacote antigo, gravado com as chaves vazias, de
+uma visita anterior à correção. `registerType: 'autoUpdate'` troca sozinho
+assim que percebe build novo.
+
 ## Histórico
 
 Cada "Usei hoje" gravava uma combinação e carimbava a data nas peças, e nenhuma
@@ -317,6 +349,15 @@ com a alternância entre entrar e criar conta escondida num link no rodapé. Ago
 o formulário mora num cartão, a alternância usa o mesmo segmentado do resto do
 aplicativo e o campo de senha tem botão de mostrar, que é o que evita a terceira
 tentativa errada em teclado de telefone.
+
+### Nome de exibição
+
+`profiles.display_name` existia no esquema desde a migração inicial e nada
+escrevia nela. Em Ajustes, com sessão remota, dá para definir o nome que a
+tela de hoje usa para cumprimentar ("Oi, {primeiro nome}") na mesma linha do
+dia da semana. Sem sessão remota o campo não aparece: o modo local não tem
+conta, só um acervo no aparelho, e nome de exibição sem conta para guardar não
+tem onde morar.
 
 O logotipo do Google aparece monocromático. A marca oficial é quadricolor e a
 interface deste aplicativo só admite cor vinda da roupa ou do frasco. Recolorir
