@@ -1,6 +1,6 @@
 # Decisões e questões em aberto
 
-Atualizado em 2026-08-18.
+Atualizado em 2026-08-19.
 
 ## Decidido
 
@@ -44,6 +44,21 @@ Atualizado em 2026-08-18.
 - Não usar conteúdo ou imagens do Fragrantica sem licença escrita. Priorizar fotografia do usuário e fontes com licença e atribuição registradas.
 
 ## Decidido — aplicativo (2026-08-19)
+
+- Separar fotografia em duas ações: câmera traseira solicitada pelo seletor
+  nativo e galeria. As duas continuam usando o mesmo recorte local e o mesmo
+  armazenamento privado.
+- Adotar cadastro rápido para roupa nova com foto, categoria e nome opcional.
+  A categoria fornece padrões editáveis de nome, formalidade, clima e situação;
+  marca, cor, tamanho, material, preço e observação ficam em detalhes.
+- Sugerir a cor dominante somente quando o recorte produziu transparência. Na
+  foto inteira o fundo poderia ser confundido com a cor da peça.
+- Consultar o Open Beauty Facts por código de barras para preencher perfumes,
+  com digitação sempre disponível e leitura pela câmera quando o navegador
+  oferece `BarcodeDetector`. Ausência no catálogo cai para o cadastro manual.
+- Importar imagem do Open Beauty Facts somente com procedência persistida:
+  provedor, página original, licença e atribuição. O endpoint do aplicativo
+  restringe o host de imagem e evita transformar a integração em proxy aberto.
 
 - Guardar fotografia da peça, com o caminho em `items.image_path` e os bytes no
   bucket privado `item-images` quando existe sessão, ou no IndexedDB do
@@ -95,8 +110,9 @@ Atualizado em 2026-08-18.
   demonstração num celular depois de um deploy que corrigiu as chaves do
   Supabase.
 - Usar `profiles.display_name`, que já existia no esquema sem escrita nenhuma,
-  para um nome de exibição editável em Ajustes e usado na saudação da tela de
-  hoje.
+  para um nickname editável somente em Ajustes e usado na saudação da tela de
+  hoje. O mesmo bloco mostra o e-mail conectado e oferece logout; a tela Hoje
+  não pede o nickname por modal.
 - Mover o seletor de situação para logo abaixo do cabeçalho da tela Hoje, antes
   do baralho de looks. Escolher a ocasião é o que decide o look inteiro, então
   precede a sugestão, e não fica atrás dela como ajuste de segunda ordem.

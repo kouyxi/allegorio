@@ -75,7 +75,8 @@ export function useAuth() {
 
   async function signOut() {
     if (!$supabase) return
-    await $supabase.auth.signOut()
+    const { error } = await $supabase.auth.signOut()
+    if (error) throw new Error(translate(error.message))
     user.value = null
   }
 

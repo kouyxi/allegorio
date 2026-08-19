@@ -1,5 +1,5 @@
 /**
- * Nome de exibição do usuário.
+ * Nickname de exibição do usuário.
  *
  * A coluna `profiles.display_name` já existia no esquema desde a primeira
  * migração e nada escrevia nela. Sem nome, a única forma de reconhecer qual
@@ -7,7 +7,7 @@
  * entrar pelo Google é fácil não saber de cabeça qual e-mail é aquele.
  *
  * Só existe com sessão remota: o modo local não tem conta, só um acervo no
- * aparelho, e nome de exibição sem conta para guardar não tem onde morar.
+ * aparelho, e nickname sem conta para guardar não tem onde morar.
  */
 export function useProfile() {
   const { $supabase } = useNuxtApp()
@@ -36,16 +36,24 @@ export function useProfile() {
      nenhum de novo. */
   async function save(nome: string) {
     const id = user.value?.id
-    if (!$supabase || !id) return
+    if (!$supabase || !id) throw new Error('Entre na sua conta para salvar o nickname.')
 
-    const limpo = nome.trim()
+    const erro = validateNickname(nome)
+    if (erro) throw new Error(erro)
+
+    const limpo = normalizeNickname(nome)
     const anterior = displayName.value
     displayName.value = limpo
 
-    const { error } = await $supabase.from('profiles').update({ display_name: limpo || null }).eq('id', id)
+    /* `upsert` também cobre contas antigas que, por qualquer razão, tenham
+       nascido antes do gatilho que cria a linha em `profiles`. */
+    const { error } = await $supabase.from('profiles').upsert({
+      id,
+      display_name: limpo || null
+    })
     if (error) {
       displayName.value = anterior
-      throw new Error('Não consegui salvar o nome.')
+      throw new Error('Não consegui salvar o nickname.')
     }
   }
 

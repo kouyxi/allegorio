@@ -2,6 +2,7 @@
 import type { Category, ItemKind, RecommendationRole } from '~/types/domain'
 import { ROLE_ICONS, ROLE_LABELS } from '~/utils/recommend'
 import { plural } from '~/utils/format'
+import { NICKNAME_MAX_LENGTH, normalizeNickname, validateNickname } from '~/utils/profile'
 
 const { items, categories, addCategory, renameCategory, removeCategory, resetDemo, isRemote } = useCollection()
 const { outfits } = useOutfits()
@@ -9,21 +10,51 @@ const backup = useBackup()
 const { user, configured, signOut } = useAuth()
 const perfil = useProfile()
 
-async function leave() {
-  await signOut()
-  await navigateTo('/entrar')
+const nicknameDraft = ref('')
+const nicknameSalvo = ref(false)
+const profileError = ref('')
+const salvandoNickname = ref(false)
+const saindo = ref(false)
+
+watch(perfil.displayName, valor => { nicknameDraft.value = valor }, { immediate: true })
+
+const nicknameNormalizado = computed(() => normalizeNickname(nicknameDraft.value))
+const nicknameInvalido = computed(() => validateNickname(nicknameDraft.value))
+const podeSalvarNickname = computed(() => Boolean(
+  user.value
+  && !salvandoNickname.value
+  && !nicknameInvalido.value
+  && nicknameNormalizado.value !== perfil.displayName.value
+))
+
+async function salvarNickname() {
+  if (!podeSalvarNickname.value) return
+
+  profileError.value = ''
+  nicknameSalvo.value = false
+  salvandoNickname.value = true
+  try {
+    await perfil.save(nicknameDraft.value)
+    nicknameDraft.value = perfil.displayName.value
+    nicknameSalvo.value = true
+    setTimeout(() => { nicknameSalvo.value = false }, 2000)
+  } catch (cause) {
+    profileError.value = cause instanceof Error ? cause.message : 'Não consegui salvar o nickname.'
+  } finally {
+    salvandoNickname.value = false
+  }
 }
 
-/* Rascunho separado do valor salvo, senão cada tecla digitada já reescreveria
-   o nome que aparece no resto do aplicativo antes de existir confirmação. */
-const nomeDraft = ref('')
-const nomeSalvo = ref(false)
-watch(perfil.displayName, valor => { nomeDraft.value = valor }, { immediate: true })
-
-async function salvarNome() {
-  await perfil.save(nomeDraft.value)
-  nomeSalvo.value = true
-  setTimeout(() => { nomeSalvo.value = false }, 2000)
+async function leave() {
+  profileError.value = ''
+  saindo.value = true
+  try {
+    await signOut()
+    await navigateTo('/entrar')
+  } catch (cause) {
+    profileError.value = cause instanceof Error ? cause.message : 'Não consegui sair da conta.'
+    saindo.value = false
+  }
 }
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -117,18 +148,17 @@ useHead({ title: 'Ajustes · Allegorio' })
 <template>
   <div class="settings">
     <header class="settings__head rise">
-      <p class="label dimmer">Estrutura do acervo</p>
-      <h1 class="display display-lg">Categorias</h1>
+      <p class="label dimmer">Conta e acervo</p>
+      <h1 class="display display-lg">Ajustes</h1>
       <p class="settings__intro">
-        O nome é seu. O papel é o que o recomendador entende: uma categoria chamada Overshirts
-        pode ocupar o lugar de terceira peça sem que a sugestão precise saber disso.
+        Confira a conta conectada, escolha como quer ser chamado e organize as categorias do seu acervo.
       </p>
     </header>
 
     <!-- a conta vem antes das categorias: é a primeira coisa que alguém quer
          conferir ao abrir ajustes, e um acervo com muitas categorias faria
          rolar bastante para chegar até aqui lá embaixo -->
-    <section v-if="configured" class="account rise rise-1">
+    <section v-if="configured && user" class="account rise rise-1">
       <div class="sec-head">
         <h2 class="sec-head__title"><AppIcon name="sun" size="1.0625rem" />Conta</h2>
       </div>
@@ -138,31 +168,43 @@ useHead({ title: 'Ajustes · Allegorio' })
           <strong>{{ perfil.displayName.value || user?.email }}</strong>
           <span v-if="perfil.displayName.value" class="account__email">{{ user?.email }}</span>
         </span>
-        <button type="button" class="btn btn--quiet btn--sm" @click="leave">Sair</button>
+        <button type="button" class="btn btn--quiet btn--sm" :disabled="saindo" @click="leave">
+          {{ saindo ? 'Saindo…' : 'Sair' }}
+        </button>
       </div>
 
-      <label class="field account__nome">
-        <span class="label">Como te chamar</span>
-        <div class="account__nome-row">
+      <label class="field account__nickname">
+        <span class="label">Nickname</span>
+        <div class="account__nickname-row">
           <input
-            v-model="nomeDraft"
+            v-model="nicknameDraft"
             class="input"
             type="text"
-            placeholder="Seu nome"
-            autocomplete="name"
-            @keyup.enter="salvarNome"
+            placeholder="Como quer ser chamado"
+            autocomplete="nickname"
+            :maxlength="NICKNAME_MAX_LENGTH"
+            :aria-invalid="Boolean(nicknameInvalido)"
+            aria-describedby="nickname-help"
+            @keyup.enter="salvarNickname"
           >
           <button
             type="button"
             class="btn btn--ghost btn--sm"
-            :disabled="nomeDraft.trim() === perfil.displayName.value"
-            @click="salvarNome"
+            :disabled="!podeSalvarNickname"
+            @click="salvarNickname"
           >
-            {{ nomeSalvo ? 'Salvo' : 'Salvar' }}
+            {{ salvandoNickname ? 'Salvando…' : nicknameSalvo ? 'Salvo' : 'Salvar' }}
           </button>
         </div>
-        <span class="account__nota">É o nome que a tela de hoje usa para te cumprimentar.</span>
+        <span id="nickname-help" class="account__nota">
+          Pode trocar quando quiser. A tela de hoje usa esse nome para te cumprimentar.
+        </span>
       </label>
+
+      <p v-if="nicknameInvalido || profileError" class="account__error" role="alert">
+        <AppIcon name="info" size="1rem" />
+        {{ nicknameInvalido || profileError }}
+      </p>
     </section>
 
     <section v-for="group in grouped" :key="group.kind" class="group rise rise-2">
@@ -402,9 +444,18 @@ useHead({ title: 'Ajustes · Allegorio' })
 }
 .account__email { overflow: hidden; color: var(--ink-4); font-size: var(--fs-micro); white-space: nowrap; text-overflow: ellipsis; }
 
-.account__nome { margin-top: var(--s3); }
-.account__nome-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2); }
+.account__nickname { margin-top: var(--s3); }
+.account__nickname-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2); }
 .account__nota { color: var(--ink-4); font-size: var(--fs-xs); line-height: 1.45; }
+.account__error {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  color: var(--ink-2);
+  font-size: var(--fs-xs);
+  line-height: 1.45;
+}
 
 .data { margin-top: var(--s7); padding-top: var(--s6); border-top: 1px solid var(--line); }
 .data__note { margin-bottom: var(--s4); color: var(--ink-3); font-size: var(--fs-sm); line-height: 1.55; }

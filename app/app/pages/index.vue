@@ -17,39 +17,6 @@ const primeiroNome = computed(() => {
   return perfil.displayName.value.trim().split(/\s+/)[0] ?? ''
 })
 
-/* --- pedir o nome uma vez --- */
-
-/* Quem tem conta e nunca definiu nome recebe a pergunta uma vez, aqui na tela
-   de chegada, e não escondida num campo de Ajustes que ninguém visita sem
-   motivo. "Agora não" marca uma chave local para não perguntar de novo neste
-   navegador; o campo em Ajustes continua disponível a qualquer momento. Só
-   decide depois que `perfil.loading` termina, senão a folha abriria e fecharia
-   sozinha no instante em que o nome ainda não tinha chegado do servidor. */
-const CHAVE_NOME_PERGUNTADO = 'allegorio:nome-perguntado'
-const nomeSheetAberta = ref(false)
-const nomeSheetDraft = ref('')
-const nomeJaDecidido = ref(false)
-
-watchEffect(() => {
-  if (nomeJaDecidido.value || !isRemote.value || perfil.loading.value) return
-  nomeJaDecidido.value = true
-
-  if (perfil.displayName.value) return
-  if (import.meta.client && localStorage.getItem(CHAVE_NOME_PERGUNTADO)) return
-  nomeSheetAberta.value = true
-})
-
-function pularNomeSheet() {
-  if (import.meta.client) localStorage.setItem(CHAVE_NOME_PERGUNTADO, '1')
-  nomeSheetAberta.value = false
-}
-
-async function salvarNomeSheet() {
-  if (!nomeSheetDraft.value.trim()) return
-  await perfil.save(nomeSheetDraft.value)
-  if (import.meta.client) localStorage.setItem(CHAVE_NOME_PERGUNTADO, '1')
-  nomeSheetAberta.value = false
-}
 const { outfits, record, wornToday, removeOutfit } = useOutfits()
 const {
   leitura: leituraClima,
@@ -494,27 +461,6 @@ useHead({
       <p class="alts__note">Fixar uma peça mantém ela em todas as combinações do baralho.</p>
     </AppSheet>
 
-    <!-- pergunta o nome uma vez só, para a saudação daqui ter o que dizer -->
-    <AppSheet v-model="nomeSheetAberta" title="Como te chamar?" subtitle="Aparece na saudação desta tela">
-      <label class="field">
-        <span class="label">Nome</span>
-        <input
-          v-model="nomeSheetDraft"
-          class="input"
-          type="text"
-          placeholder="Seu nome"
-          autocomplete="name"
-          autofocus
-          @keyup.enter="salvarNomeSheet"
-        >
-      </label>
-      <template #footer>
-        <div class="nome-sheet__actions">
-          <button type="button" class="btn btn--quiet" @click="pularNomeSheet">Agora não</button>
-          <button type="button" class="btn" :disabled="!nomeSheetDraft.trim()" @click="salvarNomeSheet">Salvar</button>
-        </div>
-      </template>
-    </AppSheet>
   </div>
 </template>
 
@@ -749,5 +695,4 @@ useHead({
 .alt__tag { padding: var(--s1) var(--s2); border-radius: var(--r-full); background: var(--ink); color: var(--ink-inv); }
 .alts__note { margin-top: var(--s4); color: var(--ink-4); font-size: var(--fs-xs); line-height: 1.45; }
 
-.nome-sheet__actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s2); }
 </style>

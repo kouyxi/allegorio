@@ -32,7 +32,12 @@ situação + clima + acervo adquirido
 - gerar apenas com itens adquiridos;
 - guardar uma combinação;
 - registrar feedback para melhorar pesos futuros;
-- fotografar a peça e guardar a foto com o fundo recortado;
+- fotografar a peça pela câmera traseira ou escolher da galeria e guardar a foto
+  com o fundo recortado;
+- cadastrar roupa rapidamente com foto e categoria, deixando os detalhes para
+  uma edição posterior;
+- preencher perfume por código de barras quando houver registro no Open Beauty
+  Facts;
 - consultar o histórico de combinações e as peças encostadas;
 - receber a temperatura de agora sem apertar nada;
 - instalar a interface como PWA.
@@ -85,6 +90,13 @@ Prioridade de origem:
 Não raspar Fragrantica, Parfumo, varejistas ou endpoints internos. Todo arquivo
 externo deve registrar provedor, URL original, licença e atribuição.
 
+O preenchimento de perfume por código de barras consulta o Open Beauty Facts.
+Dados importados registram ODbL 1.0; a fotografia, quando existe, registra CC
+BY-SA e atribuição aos contribuidores do projeto. A imagem passa por um endpoint
+do próprio aplicativo antes de entrar no depósito privado, então o navegador do
+usuário não consulta o host de imagens durante a importação. Ausência no catálogo
+ou indisponibilidade da rede sempre volta para o formulário manual.
+
 ### Fotografia da peça
 
 A foto existe para resolver um problema estreito e concreto: duas camisetas
@@ -128,6 +140,12 @@ esconde a opção de recorte.
 Fotografia não entra no arquivo de backup. Ele guarda a ficha e o caminho da
 imagem, não os bytes. Restaurar num aparelho novo devolve o acervo com o desenho
 técnico no lugar das fotos.
+
+O campo oferece duas ações distintas. "Tirar foto" usa o seletor nativo com a
+câmera traseira solicitada por `capture="environment"`; "Escolher da galeria"
+mantém o seletor de arquivo comum. Os dois entregam o mesmo `Blob` ao recorte e
+ao armazenamento. Quando o recorte produz transparência, a cor dominante da
+peça vira uma sugestão inicial de cor, ainda ajustável na ficha.
 
 ## Fora do V1
 
@@ -200,6 +218,11 @@ Decisões de interação que sustentam isso:
   genérico, porque a peça pode já ter uso de dias anteriores;
 - o formulário de cadastro pede formalidade, clima e situação, porque são os
   três campos que o motor consulta. Sem eles todo item entra com o mesmo peso;
+- roupa nova começa num cadastro rápido: foto, categoria e nome opcional. A
+  categoria define nome, formalidade, clima e situações iniciais, e o bloco de
+  detalhes permite corrigir marca, cor, tamanho, material e uso antes ou depois
+  de salvar. Perfume continua abrindo a ficha completa porque concentração,
+  volume e projeção não podem ser inferidos só pela categoria;
 - abaixo de mais ou menos 48px a peça aparece como amostra de cor sólida, acima
   disso como desenho técnico. Cor é o que se lê no tamanho pequeno, construção é
   o que se lê no grande. Havendo fotografia, ela ocupa o lugar dos dois, contida
@@ -221,11 +244,9 @@ Decisões de interação que sustentam isso:
   eliminação;
 - **a conta aparece primeiro em Ajustes**, antes das categorias, porque é a
   primeira coisa que alguém quer conferir ao abrir a tela, e um acervo com
-  muitas categorias fazia rolar bastante para chegar até ela lá embaixo. Quem
-  tem sessão remota e nunca definiu nome recebe a pergunta uma vez, numa folha
-  na própria tela Hoje, e não escondida num campo de Ajustes que ninguém visita
-  sem motivo; "Agora não" grava uma marca local para não perguntar de novo
-  neste navegador, e o campo em Ajustes continua disponível a qualquer momento.
+  muitas categorias fazia rolar bastante para chegar até ela lá embaixo. A
+  conta mostra nickname e e-mail, oferece logout e concentra a edição do
+  nickname: a tela Hoje não interrompe mais a chegada para pedir esse dado.
 
 ## Gesto lateral e toque, corrigidos em 2026-08-19
 
@@ -380,14 +401,14 @@ o formulário mora num cartão, a alternância usa o mesmo segmentado do resto d
 aplicativo e o campo de senha tem botão de mostrar, que é o que evita a terceira
 tentativa errada em teclado de telefone.
 
-### Nome de exibição
+### Nickname do perfil
 
 `profiles.display_name` existia no esquema desde a migração inicial e nada
-escrevia nela. Em Ajustes, com sessão remota, dá para definir o nome que a
-tela de hoje usa para cumprimentar ("Oi, {primeiro nome}") na mesma linha do
-dia da semana. Sem sessão remota o campo não aparece: o modo local não tem
-conta, só um acervo no aparelho, e nome de exibição sem conta para guardar não
-tem onde morar.
+escrevia nela. Em Ajustes, com sessão remota, dá para definir, trocar ou remover
+o nickname que a tela de hoje usa para cumprimentar ("Oi, {primeiro nome}") na
+mesma linha do dia da semana. O cartão também identifica o e-mail conectado e
+oferece logout. Sem sessão remota ele não aparece: o modo local não tem conta,
+só um acervo no aparelho, e nickname sem conta para guardar não tem onde morar.
 
 O logotipo do Google aparece monocromático. A marca oficial é quadricolor e a
 interface deste aplicativo só admite cor vinda da roupa ou do frasco. Recolorir
@@ -434,6 +455,11 @@ mira o que quebra em silêncio:
   e a medida de cobertura, que é o número usado para decidir entre guardar o
   recorte e guardar a foto inteira;
 - **clima**: os cortes entre as três faixas, inclusive nos limites;
+- **cadastro rápido**: os padrões por categoria e a queda para o papel semântico
+  em categorias personalizadas;
+- **perfume**: normalização de GTIN, volume, concentração e procedência do
+  registro importado;
+- **imagem**: a escolha da cor dominante ignora a área transparente do recorte;
 - **autenticação**: a tradução de erro do Supabase, inclusive o casamento por
   trecho que transforma "provider is not enabled" em instrução de painel.
 
@@ -467,6 +493,7 @@ em nenhum dos dois lugares.
 - Supabase Auth, Postgres e Storage;
 - `onnxruntime-web` com a U²-Netp para o recorte de fundo no aparelho;
 - Open-Meteo para a temperatura;
+- Open Beauty Facts para preenchimento opcional de perfume por código de barras;
 - Row Level Security em toda tabela com dados do usuário.
 
 O protótipo local vive em `app/`. A publicação continua em `web/`.
