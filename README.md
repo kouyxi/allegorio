@@ -6,9 +6,10 @@ O projeto começa como **site + newsletter**, com vídeos curtos faceless no Tik
 
 ## Estado atual
 
-- Fase: implementação do MVP editorial.
+- Fase: implementação do MVP editorial e protótipo privado do aplicativo de acervo.
 - Nome da marca: **Allegorio**, sujeito à validação jurídica e de disponibilidade digital.
-- Stack: Nuxt 4 + TypeScript + Nuxt Content, em `web/`. Phoenix entra depois, quando houver estado durável.
+- Stack editorial: Nuxt 4 + TypeScript + Nuxt Content, em `web/`.
+- Stack do aplicativo: Nuxt 4 PWA, em `app/`, preparado para Cloudflare Workers + Supabase.
 - Identidade visual: direção inicial em tons de marrom e branco, ainda em exploração.
 - Produto lançado: não.
 - Data deste contexto: 2026-08-16.
@@ -22,6 +23,7 @@ O projeto começa como **site + newsletter**, com vídeos curtos faceless no Tik
 5. [Monetização e confiança](docs/04-monetization-and-trust.md)
 6. [Decisões e questões em aberto](docs/05-decisions-and-open-questions.md)
 7. [Guardrails e alertas de desvio](docs/06-guardrails.md)
+8. [MVP do aplicativo](docs/07-app-mvp.md)
 
 O arquivo [CLAUDE.md](CLAUDE.md) resume o contexto operacional para futuras sessões com agentes de código.
 
@@ -30,6 +32,7 @@ O arquivo [CLAUDE.md](CLAUDE.md) resume o contexto operacional para futuras sess
 ```
 docs/   documentação estratégica (fonte de verdade do produto)
 web/    aplicação Nuxt — blog + newsletter
+app/    aplicação Nuxt — guarda-roupa, perfumes e recomendação contextual
 ```
 
 ## Desenvolvimento local

@@ -7,6 +7,7 @@ imagem: d-pocket
 legenda: Bolso de calça jeans com rebite de cobre
 pergunta: Por que trocar a camiseta raramente salva um look?
 summary: A maioria das pessoas escolhe a parte de cima primeiro, e é aí que o look já sai torto. A calça ocupa mais da metade da altura visível do corpo, define a linha vertical e decide onde as pernas parecem começar.
+peca: calca
 tags:
   - proporção
   - calça

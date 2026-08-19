@@ -20,6 +20,10 @@ export default defineContentConfig({
         imagem: z.string(),
         legenda: z.string(),
         destaque: z.boolean().default(false),
+        // desenho técnico exibido no artigo, quando a peça tem um
+        peca: z.enum(['jaqueta', 'calca', 'camisa', 'casaco']).optional(),
+        // ficha de material, na ordem canônica: matéria, construção, peso, proc.
+        ficha: z.array(z.object({ r: z.string(), v: z.string() })).default([]),
         tags: z.array(z.string()).default([])
       })
     })

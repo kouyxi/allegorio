@@ -22,12 +22,14 @@ const caminho = computed(() =>
     .filter((p): p is typeof p & { artigo: Artigo } => Boolean(p.artigo))
 )
 
-/** Prancha de materiais: quadro fixo, não conteúdo editorial. */
-const MATERIA = [
-  { img: 'g-weave', alt: 'Trama de sarja vista de perto', nome: 'Sarja 3x1 · algodão' },
-  { img: 'f-linen', alt: 'Tecido de linho escuro', nome: 'Linho · fio torcido' },
-  { img: 'h-coat', alt: 'Lã de casaco em macro', nome: 'Lã batida · casaco' },
-  { img: 'b-twill-sq', alt: 'Sarja de algodão mostrando o diagonal', nome: 'Índigo · desbotado' }
+/** Tira de materiais: quadro fixo, não conteúdo editorial. A ficha segue a
+   ordem canônica. As gramaturas são de referência de categoria enquanto as
+   fotos forem de acervo, e viram medida aferida na produção própria. */
+const MATERIA: { img: string, alt: string, ficha: [string, string][] }[] = [
+  { img: 'g-weave', alt: 'Trama de sarja vista de perto', ficha: [['ALG', '100'], ['Sarja', '3×1'], ['Peso', '340 g/m²']] },
+  { img: 'f-linen', alt: 'Tecido de linho escuro', ficha: [['LI', '100'], ['Tela', 'Fio torcido'], ['Peso', '190 g/m²']] },
+  { img: 'h-coat', alt: 'Lã de casaco em macro', ficha: [['LÃ', '80'], ['Melton', 'Batida'], ['Peso', '640 g/m²']] },
+  { img: 'b-twill-sq', alt: 'Sarja de algodão mostrando o diagonal', ficha: [['ALG', '100'], ['Índigo', 'Desbotado'], ['Peso', '380 g/m²']] }
 ]
 
 const METODO = [
@@ -114,10 +116,10 @@ useHead({
 
         <div class="lead__body">
           <div>
-            <p class="kicker lbl">
-              <span class="acc">{{ destaque.pilar }}</span>
-              <span class="dim">{{ destaque.minutos }} min</span>
-            </p>
+            <Ficha
+              class="lead__ficha"
+              :campos="[['Pilar', destaque.pilar], ['Aferição', `${destaque.minutos} min`]]"
+            />
             <h2 class="fat lead__title">{{ destaque.title }}</h2>
           </div>
 
@@ -164,7 +166,9 @@ useHead({
     <section class="strip rise" aria-label="Matéria">
       <figure v-for="m in MATERIA" :key="m.img" class="plate">
         <img :src="`/img/${m.img}.jpg`" :alt="m.alt" width="700" height="875" loading="lazy">
-        <figcaption class="lbl">{{ m.nome }}</figcaption>
+        <figcaption>
+          <Ficha :campos="m.ficha" />
+        </figcaption>
       </figure>
     </section>
 
@@ -300,6 +304,7 @@ useHead({
 
 <style scoped>
 .mb { margin-bottom: 0.9rem; }
+.lead__ficha { margin-bottom: 0.9rem; }
 .vazio { display: block; padding-block: 4rem; }
 
 /* ── masthead ──────────────────────────────────────────────────────────

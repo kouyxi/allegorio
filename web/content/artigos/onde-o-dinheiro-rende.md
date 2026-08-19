@@ -7,6 +7,7 @@ imagem: e-boot
 legenda: Bota de couro com barra de calça jeans
 pergunta: Com dinheiro contado, onde cada real rende mais?
 summary: Um orçamento de R$ 1.500 dividido de três formas diferentes. Uma delas muda bastante o resultado final, e não costuma ser a que a maioria escolhe primeiro.
+peca: casaco
 tags:
   - orçamento
   - análise

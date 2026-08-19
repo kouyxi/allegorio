@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { NOME_PECA, type Peca } from '~/types/desenho'
+
 const route = useRoute()
 
 const { data: artigo } = await useAsyncData(`artigo-${route.path}`, () =>
@@ -11,6 +13,24 @@ if (!artigo.value) {
 
 const data = computed(() =>
   new Date(artigo.value!.date).toLocaleDateString('pt-BR', { dateStyle: 'long' })
+)
+
+/** Ficha do artigo, na ordem canônica da casa. */
+const cabecalho = computed<[string, string][]>(() => [
+  ['Pilar', artigo.value!.pilar],
+  ['Aferição', `${artigo.value!.minutos} min`],
+  ['Data', data.value]
+])
+
+/** Nome da peça desenhada, quando o artigo declara uma. */
+const nomePeca = computed(() => {
+  const p = artigo.value?.peca as Peca | undefined
+  return p ? NOME_PECA[p] : ''
+})
+
+/** Ficha de material, quando o artigo declara uma. */
+const ficha = computed<[string, string][]>(() =>
+  (artigo.value?.ficha ?? []).map((c: { r: string, v: string }) => [c.r, c.v])
 )
 
 useHead({
@@ -33,19 +53,41 @@ useHead({
       </figure>
 
       <div class="top__body">
-        <p class="kicker lbl">
-          <span class="acc">{{ artigo.pilar }}</span>
-          <span class="dim">{{ artigo.minutos }} min</span>
-          <span class="dim">{{ data }}</span>
-        </p>
+        <VaultSeal class="top__selo" :semente="artigo.path" />
+
+        <div>
+          <p class="lbl dim mb-x">A pergunta</p>
+          <p class="top__q">{{ artigo.pergunta }}</p>
+        </div>
+
         <h1 class="fat top__title">{{ artigo.title }}</h1>
         <p class="dek dim">{{ artigo.summary }}</p>
+
+        <Ficha modo="bloco" :campos="cabecalho" />
       </div>
     </header>
 
     <div class="prose shell rise">
       <ContentRenderer :value="artigo" />
     </div>
+
+    <section v-if="artigo.peca" class="desenho slab rise" aria-labelledby="des-tit">
+      <div class="shell desenho__in">
+        <div class="desenho__txt">
+          <p class="lbl dim mb-x">Desenho técnico</p>
+          <h2 id="des-tit" class="fat desenho__t">{{ nomePeca }}</h2>
+          <p class="dim desenho__d">
+            Vista de frente. Linha cheia é corte, linha fina é costura de união
+            e pontilhado é pesponto.
+          </p>
+          <Ficha v-if="ficha.length" :campos="ficha" class="desenho__ficha" />
+        </div>
+
+        <figure class="desenho__fig">
+          <FlatTecnico :peca="artigo.peca" />
+        </figure>
+      </div>
+    </section>
 
     <section id="carta" class="carta rise">
       <div class="carta__left">
@@ -192,6 +234,47 @@ useHead({
 }
 
 .next { max-width: 42ch; }
+
+/* ── cabeçalho ─────────────────────────────────────────────────────── */
+.mb-x { margin-bottom: 0.35rem; }
+
+.top__selo { width: 2.5rem; }
+
+/* A pergunta é a etapa I do método, então ela abre o artigo em vez de ficar
+   escondida no meio do texto. */
+.top__q {
+  font-size: clamp(0.9375rem, 1.7vw, 1.125rem);
+  line-height: 1.5;
+  max-width: 42ch;
+  font-variation-settings: "wdth" 82, "wght" 500;
+}
+
+/* ── desenho técnico ───────────────────────────────────────────────── */
+.desenho__in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: center;
+}
+
+.desenho__t { font-size: clamp(1.4rem, 3vw, 2.2rem); margin-bottom: 0.9rem; }
+.desenho__d { max-width: 46ch; }
+.desenho__ficha { margin-top: 1.1rem; }
+
+.desenho__fig {
+  border: var(--bar) solid var(--ink);
+  padding: clamp(0.75rem, 2vw, 1.5rem);
+  background-image:
+    linear-gradient(to right, var(--hair-c) 0 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hair-c) 0 1px, transparent 1px);
+  background-size: 1.25rem 1.25rem;
+}
+
+.desenho__fig :deep(.flat) { max-height: 52vh; margin-inline: auto; }
+
+@media (max-width: 860px) {
+  .desenho__in { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 860px) {
   .carta { grid-template-columns: 1fr; }

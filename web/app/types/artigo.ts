@@ -1,4 +1,5 @@
 import type { PILARES } from '~~/content.config'
+import type { Peca } from '~/types/desenho'
 
 export type Pilar = (typeof PILARES)[number]
 
@@ -14,4 +15,6 @@ export interface Artigo {
   imagem: string
   legenda: string
   destaque?: boolean
+  peca?: Peca
+  ficha?: { r: string, v: string }[]
 }

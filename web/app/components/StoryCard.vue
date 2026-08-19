@@ -13,10 +13,7 @@ defineProps<{ artigo: Artigo }>()
       height="438"
       loading="lazy"
     >
-    <p class="kicker lbl">
-      <span class="acc">{{ artigo.pilar }}</span>
-      <span class="dim">{{ artigo.minutos }} min</span>
-    </p>
+    <Ficha :campos="[['Pilar', artigo.pilar], ['Aferição', `${artigo.minutos} min`]]" />
     <h3 class="fat story__title">{{ artigo.title }}</h3>
     <p class="dim">{{ artigo.summary }}</p>
   </NuxtLink>
@@ -37,8 +34,7 @@ defineProps<{ artigo: Artigo }>()
   color: var(--paper);
 }
 
-.story:hover :deep(.dim),
-.story:hover :deep(.acc) { color: var(--paper); }
+.story:hover :deep(.dim) { color: var(--paper); }
 
 .story:hover img { filter: invert(1); }
 

@@ -26,5 +26,9 @@ pnpm-debug.log*
 !.vscode/extensions.json
 !.vscode/settings.json
 
+# Python (scripts de geração de asset)
+__pycache__/
+*.pyc
+
 # Tests
 coverage

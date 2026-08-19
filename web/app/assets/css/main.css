@@ -4,6 +4,12 @@
    sai de valor, peso e escala. A única cor do site está nas fotografias,
    e ela chega conforme a imagem entra na tela.
    Sem serifa e sem raio de canto em lugar nenhum.
+
+   A gramática vem da ficha técnica de confecção, não do editorial genérico:
+   toda régua horizontal é uma linha de corte com a sua margem de costura
+   pontilhada logo abaixo, a coluna da esquerda é uma fita métrica que corre
+   o documento inteiro, e as peças aparecem em desenho técnico antes de
+   aparecerem em fotografia.
    ═══════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -30,6 +36,9 @@
   --gutter: clamp(0.9rem, 2.4vw, 2rem);
   --max: 1440px;
   --bar-h: 2.75rem;      /* altura da barra fixa, usada no scroll-padding */
+
+  --rail: 3rem;          /* a fita métrica na canhota do documento */
+  --folga: 5px;          /* distância entre linha de corte e margem de costura */
 }
 
 html {
@@ -50,6 +59,7 @@ html {
 
 body {
   margin: 0;
+  padding-left: var(--rail);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--mono);
@@ -81,7 +91,7 @@ img {
 }
 
 /* ── papéis tipográficos ───────────────────────────────────────────────
-   Archivo Expanded 900 gasta ~1em por maiúscula. Todo tamanho de display
+   Archivo Expanded 900 gasta ~0,85em por maiúscula. Todo tamanho de display
    abaixo foi escolhido para a palavra mais longa da sua coluna caber. */
 
 .fat {
@@ -107,6 +117,9 @@ img {
   color: var(--ink);
   font-variation-settings: "wdth" 100, "wght" 700;
 }
+
+/* número técnico: sempre tabular, para as colunas baterem entre linhas */
+.num { font-variant-numeric: tabular-nums; }
 
 .shell {
   max-width: var(--max);
@@ -134,11 +147,96 @@ img {
 
 .more:hover { color: var(--accent-ink); }
 
+/* ── a fita métrica ────────────────────────────────────────────────────
+   Corre a altura inteira do documento, do lado de fora do conteúdo. Não é
+   ornamento: é a régua contra a qual a página é medida, e é o que faz o
+   site ser reconhecível numa miniatura de 200px. */
+
+.raiz { position: relative; }
+
+.rail {
+  position: absolute;
+  left: calc(var(--rail) * -1);
+  top: 0;
+  bottom: 0;
+  width: var(--rail);
+  border-right: var(--bar) solid var(--ink);
+  pointer-events: none;
+}
+
+/* dois traços: o miúdo de 4mm e o cheio de 2cm, ambos ancorados na borda */
+.rail::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to bottom, var(--ink) 0 1px, transparent 1px),
+    linear-gradient(to bottom, var(--hair-c) 0 1px, transparent 1px);
+  background-size: 0.9rem 6rem, 0.45rem 0.75rem;
+  background-position: 100% 0, 100% 0;
+  background-repeat: repeat-y, repeat-y;
+}
+
+.rail__marca {
+  position: sticky;
+  top: calc(var(--bar-h) + 1.5rem);
+  writing-mode: vertical-rl;
+  padding: 0.75rem 0 0 0.45rem;
+  font-size: 0.5625rem;
+  letter-spacing: 0.24em;
+  color: var(--dim);
+}
+
+/* ── linha de corte e margem de costura ────────────────────────────────
+   A régua horizontal do site inteiro. Sólida em cima, pontilhada abaixo,
+   como uma peça de modelagem antes de ser cortada. */
+
+.corte {
+  border-bottom: var(--bar) solid currentColor;
+  position: relative;
+}
+
+.corte::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--folga) * -1 - var(--bar));
+  border-bottom: var(--hair) dashed currentColor;
+  opacity: 0.55;
+}
+
+/* piquete: o corte marcado nas pontas, como numa modelagem. Os dois traços
+   saem de um pseudo só, para o outro continuar livre para a linha tracejada. */
+.piquete { position: relative; }
+
+.piquete::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.34rem;
+  height: 0.68rem;
+  background:
+    linear-gradient(currentColor 0 0) left / var(--bar) 100% no-repeat,
+    linear-gradient(currentColor 0 0) right / var(--bar) 100% no-repeat;
+}
+
 /* ── lajes e cabeçalhos de seção ───────────────────────────────────── */
 
 .slab {
   border-bottom: var(--bar) solid var(--ink);
-  padding-block: clamp(1.75rem, 3.4vw, 3rem);
+  padding-block: clamp(1.75rem, 3.4vw, 3rem) clamp(2rem, 3.8vw, 3.4rem);
+  position: relative;
+}
+
+.slab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--folga);
+  border-bottom: var(--hair) dashed var(--hair-c);
 }
 
 .slab--ink {
@@ -148,6 +246,8 @@ img {
   position: relative;
   overflow: hidden;
 }
+
+.slab--ink::after { border-bottom-color: var(--dim-on-ink); }
 
 .slab--ink .dim { color: var(--dim-on-ink); }
 
@@ -169,8 +269,32 @@ img {
   gap: 1rem;
   flex-wrap: wrap;
   padding-bottom: 0.7rem;
-  margin-bottom: clamp(1rem, 2.2vw, 1.5rem);
+  margin-bottom: clamp(1.25rem, 2.4vw, 1.75rem);
   border-bottom: var(--bar) solid currentColor;
+  position: relative;
+}
+
+.head::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--folga) * -1 - var(--bar));
+  border-bottom: var(--hair) dashed currentColor;
+  opacity: 0.5;
+}
+
+/* piquetes nas pontas da linha de corte do cabeçalho */
+.head::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.34rem;
+  height: 0.68rem;
+  background:
+    linear-gradient(currentColor 0 0) left / var(--bar) 100% no-repeat,
+    linear-gradient(currentColor 0 0) right / var(--bar) 100% no-repeat;
 }
 
 .head h2 { font-size: clamp(1.1rem, 2.2vw, 1.6rem); }
@@ -212,6 +336,69 @@ img {
 
 .plate:hover figcaption { background: var(--accent); color: var(--on-accent); }
 
+/* a ficha dentro da barra preta precisa do cinza claro, não do escuro */
+.plate figcaption .dim { color: var(--dim-on-ink); }
+
+/* cota sobre a fotografia: linha de medida com ponteiras, como num
+   desenho de aferição. Só aparece onde existe medida real para mostrar. */
+.cota {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--paper);
+  mix-blend-mode: difference;
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cota::before,
+.cota::after {
+  content: "";
+  height: 0.62rem;
+  width: var(--hair);
+  background: currentColor;
+  flex: none;
+}
+
+.cota__linha {
+  flex: 1;
+  height: var(--hair);
+  background: currentColor;
+}
+
+/* ── desenho técnico ───────────────────────────────────────────────────
+   As peças são desenhadas por código, no mesmo espírito do selo: a mesma
+   fonte serve a qualquer tamanho e nenhuma imagem precisa ser licenciada. */
+
+.flat { display: block; width: 100%; height: auto; }
+
+.flat path,
+.flat circle {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.flat .cut { stroke-width: 2; }
+.flat .seam { stroke-width: 1.1; }
+.flat .stitch { stroke-width: 0.85; stroke-dasharray: 3 2.6; }
+.flat .btn { stroke-width: 1.1; }
+
+/* chamada numerada: o círculo e a linha que apontam para um detalhe */
+.flat .call { stroke-width: 0.9; stroke: currentColor; }
+
+.flat text {
+  fill: currentColor;
+  font-family: var(--mono);
+  font-size: 7px;
+  font-variation-settings: "wdth" 100, "wght" 600;
+  letter-spacing: 0.04em;
+}
+
 /* ── movimento ─────────────────────────────────────────────────────────
    Interação é seca: 60ms, sem easing macio. O que é lento vem do scroll.
    Tudo abaixo usa animation-timeline: view(), que é nativo e não custa
@@ -229,10 +416,12 @@ img {
 }
 
 /* a assinatura do site: a interface é cinza, e a cor chega junto com a
-   atenção. A foto entra quase dessaturada e abre conforme sobe na tela. */
+   atenção. A foto entra sem cor nenhuma e abre conforme sobe na tela.
+   Vai até o cinza cheio de propósito: no valor anterior a transição
+   acontecia mas ninguém percebia que tinha acontecido. */
 @keyframes bloom {
-  from { filter: saturate(0.12) contrast(1.04); }
-  to { filter: saturate(1) contrast(1); }
+  from { filter: grayscale(1) contrast(1.06); }
+  to { filter: grayscale(0) contrast(1); }
 }
 
 @supports (animation-timeline: view()) {
@@ -254,7 +443,7 @@ img {
     .cat__fig img {
       animation: drift linear both, bloom linear both;
       animation-timeline: view(), view();
-      animation-range: cover, entry 15% cover 42%;
+      animation-range: cover, entry 20% cover 55%;
     }
   }
 }
@@ -284,4 +473,23 @@ img {
 @keyframes fatten {
   from { --w: 62; opacity: 0; }
   to { --w: 125; opacity: 1; }
+}
+
+/* o selo acende caixotão por caixotão conforme entra na tela: o mesmo
+   gesto do bloom, aplicado à marca em vez da fotografia */
+@property --preenche {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@keyframes acende {
+  from { --preenche: 0; }
+  to { --preenche: 1; }
+}
+
+/* ── a fita some no telefone: não há canhota sobrando ─────────────── */
+@media (max-width: 860px) {
+  :root { --rail: 0px; }
+  .rail { display: none; }
 }

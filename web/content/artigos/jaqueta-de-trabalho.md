@@ -7,6 +7,7 @@ imagem: a-cuff
 legenda: Punho de jaqueta jeans com rebites e pesponto
 pergunta: O que substitui o moletom sem mudar o resto?
 summary: Mesma liberdade de movimento, mesma faixa de temperatura, presença bem diferente. Para quem quer sair do básico sem reformar o guarda-roupa inteiro, essa costuma ser a troca de maior retorno.
+peca: jaqueta
 tags:
   - jaqueta
   - workwear

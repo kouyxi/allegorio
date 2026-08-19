@@ -8,6 +8,16 @@ legenda: Trama de sarja vista de perto
 destaque: true
 pergunta: Por que duas jaquetas iguais parecem peças diferentes?
 summary: A mesma jaqueta em dois pesos de tecido vira duas peças diferentes. Uma acompanha o corpo, a outra constrói uma forma própria. O número que aparece na etiqueta diz quanto pesa um metro quadrado, e é ele que responde por boa parte do caimento.
+peca: jaqueta
+ficha:
+  - r: Matéria
+    v: ALG 100
+  - r: Construção
+    v: Sarja 3×1
+  - r: Peso
+    v: 12 oz · 407 g/m²
+  - r: Proc.
+    v: BR
 tags:
   - tecido
   - gramatura

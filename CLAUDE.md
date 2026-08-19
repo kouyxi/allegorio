@@ -12,6 +12,8 @@ Leia, nesta ordem:
 4. o documento da fase em que o trabalho se encontra;
 5. `docs/05-decisions-and-open-questions.md` antes de tomar decisões de produto.
 
+Para trabalho no aplicativo, o documento da fase é `docs/07-app-mvp.md`.
+
 ## Fonte de verdade
 
 - Estes documentos registram a intenção atual do fundador.
@@ -74,9 +76,29 @@ Exemplos que exigem alerta:
 
 ## Estado da implementação
 
-A aplicação Nuxt vive em `web/`, fora da raiz, para abrir espaço a um backend Phoenix futuro em diretório irmão. O escopo atual é blog + newsletter. Nada foi lançado.
+A publicação Nuxt vive em `web/`. Um segundo projeto Nuxt vive em `app/` e implementa o protótipo mobile-first de acervo pessoal, lista de desejos e recomendação contextual de roupas + perfumes. Nada foi lançado.
+
+O protótipo em `app/` é uma mudança consciente registrada em 2026-08-18. Ele deve continuar estreito: utilidade pessoal antes de comunidade ou catálogo global, regras determinísticas antes de IA e itens adquiridos antes de sugestões de compra. Cloudflare Workers + Supabase substituem a hipótese inicial de Phoenix para este primeiro backend durável; Phoenix pode ser reavaliado quando a lógica de domínio ou os jobs justificarem a operação própria.
 
 A home, o índice e a página de artigo já aplicam a direção visual definitiva. O sistema de design está em `web/app/assets/css/main.css`; os sketches que levaram até ele ficaram em `design/`, com `design/build.py` embutindo as imagens para publicação como artifact.
+
+Em 2026-08-18 o sistema ganhou uma gramática própria, tirada da ficha técnica de confecção. A justificativa, as cinco decisões e a norma de fotografia estão em `docs/08-visual-identity.md`, que é a fonte de verdade do assunto.
+
+Em 2026-08-19 o aplicativo ganhou fotografia de peça com recorte de fundo no
+aparelho, a página `/historico` e a busca automática de temperatura, e o preset
+de entrega na Cloudflare foi corrigido de `cloudflare` para `cloudflare-module`.
+As decisões estão em `docs/05-decisions-and-open-questions.md` e os detalhes em
+`docs/07-app-mvp.md`.
+
+O aplicativo em `app/` foi redesenhado do zero em 2026-08-18 e tem sistema
+próprio em `app/app/assets/css/main.css`. Ele é um dialeto da publicação, com a
+justificativa e a tabela de divergências em `docs/05-decisions-and-open-questions.md`.
+As regras abaixo valem para `web/`; dentro de `app/` valem raio de canto,
+profundidade por sombra, transições de 150ms a 400ms e tipografia própria:
+**Bricolage Grotesque** no display, **Onest** na interface e Martian Mono só em
+algarismo. O aplicativo não usa mais Archivo. O parentesco com a publicação passa
+a vir da monocromia, do desenho técnico e da notação de ficha, não da fonte. Continuam valendo nos
+dois: sem serifa, monocromia e desenho técnico gerado por código.
 
 Regras do sistema visual que não devem ser quebradas sem alerta:
 
@@ -97,7 +119,14 @@ Regras do sistema visual que não devem ser quebradas sem alerta:
 - nada de artefato fingido: sem "Fig. 01", sem número de edição, sem numeral romano de data, sem ® numa marca ainda não registrada. Latim só como etiqueta pequena, nunca como manchete;
 - zero raio de canto, borda única de 2px, transições de 60ms;
 - fotografia entra legendada como prova técnica, nunca como enfeite;
-- as fotos atuais são provisórias (Creative Commons via Openverse) e devem ser trocadas por produção própria.
+- as fotos atuais são provisórias (Creative Commons via Openverse) e devem ser trocadas por produção própria, seguindo a norma de enquadramento de `docs/08-visual-identity.md`;
+- **toda régua horizontal é linha de corte com margem de costura**: fio de 2px, pontilhado de 1px cinco pixels abaixo, piquetes nas pontas dos cabeçalhos. Está em `.slab`, `.head`, `.corte` e `.piquete`;
+- **a canhota do documento é uma fita métrica** (`.rail`), presente em toda página acima de 860px. Não remover para ganhar largura;
+- **a notação é única** (`Ficha.vue`), com ordem de campo fixa: material é `MATÉRIA · CONSTRUÇÃO · PESO · PROCEDÊNCIA`, artigo é `PILAR · AFERIÇÃO · DATA`. Nenhuma chamada nova inventa ordem própria;
+- **o selo é paramétrico** (`VaultSeal.vue`): passando `semente`, os anéis e caixotões saem de hash determinístico do conteúdo. Não substituir por arquivo estático;
+- **as peças aparecem em desenho técnico** (`FlatTecnico.vue`) gerado por código, com três pesos de traço que carregam significado: cheio é corte, fino é costura de união, pontilhado é pesponto. O desenho é figura de artigo, não vitrine: nada de prancha de demonstração na home;
+- **o registro é o de uma publicação séria**. Compromissos editoriais aparecem como texto sob "Política editorial", nunca fantasiados de etiqueta de conservação ou de qualquer outro artefato de vestuário;
+- valor de ficha que não veio de peça aferida precisa vir marcado como referência de categoria.
 
 ## Voz e escrita
 
@@ -120,8 +149,9 @@ Decisões técnicas atuais:
 - Nuxt 4 é responsável pela publicação, renderização e frontend;
 - Nuxt Content mantém o conteúdo editorial estruturado no MVP (`web/content/artigos/`);
 - a newsletter grava inscrições em arquivo local (`web/.data/subscribers.jsonl`) via `server/api/subscribe.post.ts`; é provisório e deve ser o primeiro trecho a migrar para Phoenix ou um provedor de e-mail;
-- não existe banco transacional, autenticação ou backend Phoenix nesta fase;
-- Phoenix deve ser reconsiderado quando surgir a primeira necessidade real de estado durável, autorização ou processamento assíncrono persistente;
-- a intenção de hospedagem é uma VPS da Hetzner, ainda sem configuração operacional definida.
+- a publicação em `web/` não possui banco transacional nem autenticação;
+- o aplicativo em `app/` cria a primeira necessidade real de estado durável e autorização, atendida no V1 por Supabase Auth, Postgres e Storage;
+- Phoenix permanece uma opção futura caso lógica de domínio ou jobs persistentes justifiquem backend próprio;
+- a intenção de hospedagem da publicação é uma VPS da Hetzner; o aplicativo está configurado para Cloudflare Workers.
 
 Não antecipar autenticação, filas, banco transacional ou serviços separados antes desses gatilhos.
