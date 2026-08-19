@@ -504,7 +504,9 @@ useHead({
   align-items: center;
   justify-content: space-between;
   gap: var(--s3);
-  margin-top: var(--s4);
+  /* O baralho usa margem inferior negativa de --s3. Somar esse valor aqui
+     preserva 1rem real entre o fim dos cartões e a linha de navegação. */
+  margin-top: calc(var(--s4) + var(--s3));
 }
 .deck__hint {
   display: inline-flex;
