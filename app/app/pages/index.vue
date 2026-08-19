@@ -16,6 +16,40 @@ const primeiroNome = computed(() => {
   if (!isRemote.value) return ''
   return perfil.displayName.value.trim().split(/\s+/)[0] ?? ''
 })
+
+/* --- pedir o nome uma vez --- */
+
+/* Quem tem conta e nunca definiu nome recebe a pergunta uma vez, aqui na tela
+   de chegada, e não escondida num campo de Ajustes que ninguém visita sem
+   motivo. "Agora não" marca uma chave local para não perguntar de novo neste
+   navegador; o campo em Ajustes continua disponível a qualquer momento. Só
+   decide depois que `perfil.loading` termina, senão a folha abriria e fecharia
+   sozinha no instante em que o nome ainda não tinha chegado do servidor. */
+const CHAVE_NOME_PERGUNTADO = 'allegorio:nome-perguntado'
+const nomeSheetAberta = ref(false)
+const nomeSheetDraft = ref('')
+const nomeJaDecidido = ref(false)
+
+watchEffect(() => {
+  if (nomeJaDecidido.value || !isRemote.value || perfil.loading.value) return
+  nomeJaDecidido.value = true
+
+  if (perfil.displayName.value) return
+  if (import.meta.client && localStorage.getItem(CHAVE_NOME_PERGUNTADO)) return
+  nomeSheetAberta.value = true
+})
+
+function pularNomeSheet() {
+  if (import.meta.client) localStorage.setItem(CHAVE_NOME_PERGUNTADO, '1')
+  nomeSheetAberta.value = false
+}
+
+async function salvarNomeSheet() {
+  if (!nomeSheetDraft.value.trim()) return
+  await perfil.save(nomeSheetDraft.value)
+  if (import.meta.client) localStorage.setItem(CHAVE_NOME_PERGUNTADO, '1')
+  nomeSheetAberta.value = false
+}
 const { outfits, record, wornToday, removeOutfit } = useOutfits()
 const {
   leitura: leituraClima,
@@ -307,17 +341,7 @@ useHead({
         </span>
       </div>
 
-      <section v-if="activeLook.reasons.length" class="why rise rise-4" aria-live="polite">
-        <p class="why__title">
-          <AppIcon name="info" size="0.9375rem" :weight="2" />
-          <span class="label dimmer">Por quê</span>
-        </p>
-        <ul>
-          <li v-for="reason in activeLook.reasons.slice(0, 3)" :key="reason">{{ reason }}</li>
-        </ul>
-      </section>
-
-      <div class="home__actions rise rise-5">
+      <div class="home__actions rise rise-4">
         <button
           type="button"
           class="btn"
@@ -469,18 +493,45 @@ useHead({
       </ul>
       <p class="alts__note">Fixar uma peça mantém ela em todas as combinações do baralho.</p>
     </AppSheet>
+
+    <!-- pergunta o nome uma vez só, para a saudação daqui ter o que dizer -->
+    <AppSheet v-model="nomeSheetAberta" title="Como te chamar?" subtitle="Aparece na saudação desta tela">
+      <label class="field">
+        <span class="label">Nome</span>
+        <input
+          v-model="nomeSheetDraft"
+          class="input"
+          type="text"
+          placeholder="Seu nome"
+          autocomplete="name"
+          autofocus
+          @keyup.enter="salvarNomeSheet"
+        >
+      </label>
+      <template #footer>
+        <div class="nome-sheet__actions">
+          <button type="button" class="btn btn--quiet" @click="pularNomeSheet">Agora não</button>
+          <button type="button" class="btn" :disabled="!nomeSheetDraft.trim()" @click="salvarNomeSheet">Salvar</button>
+        </div>
+      </template>
+    </AppSheet>
   </div>
 </template>
 
 <style scoped>
 /* +4px sobre o --s7 padrão: a seção seguinte (situação, depois o baralho)
    estava colada de mais no cabeçalho. */
-.home__head { margin-bottom: calc(var(--s7) + var(--s1)); }
+.home__head { margin-bottom: var(--s7); }
 .home__date { display: flex; align-items: center; gap: var(--s1); }
 .home__head h1 { margin-top: var(--s2); max-width: 11ch; }
 
 /* --- situação --- */
-.situacao { margin-bottom: var(--s6); }
+/* O baralho logo abaixo tem margem superior negativa de --s3 (é o truque que
+   sangra as bordas dele até a tela sem empurrar o conteúdo vizinho), e essa
+   margem negativa comia justamente o respiro que deveria existir aqui. Por
+   isso o valor não é só --s6: é --s6 mais o --s3 que o baralho vai devorar,
+   mais --s1 de folga extra por cima disso. */
+.situacao { margin-bottom: calc(var(--s7) + var(--s1)); }
 .situacao__nota { min-height: 2.25rem; margin-top: var(--s2); color: var(--ink-3); font-size: var(--fs-xs); line-height: 1.45; }
 
 /* --- baralho --- */
@@ -528,30 +579,6 @@ useHead({
 }
 
 /* --- ações --- */
-.why {
-  margin-top: var(--s5);
-  padding: var(--s4);
-  border-radius: var(--r-md);
-  background: var(--paper-2);
-  box-shadow: var(--sh-inset);
-}
-.why__title { display: flex; align-items: center; gap: var(--s1); color: var(--ink-4); }
-.why ul { display: grid; gap: var(--s1); margin-top: var(--s2); }
-.why li {
-  position: relative;
-  padding-left: var(--s3);
-  color: var(--ink-2);
-  font-size: var(--fs-xs);
-  line-height: 1.45;
-}
-.why li::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0.5rem;
-  width: var(--s1); height: 1px;
-  background: var(--line-3);
-}
-
 .home__actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2); margin-top: var(--s5); }
 .home__actions:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
 .home__hint { margin-top: var(--s3); color: var(--ink-3); font-size: var(--fs-xs); line-height: 1.45; }
@@ -595,20 +622,24 @@ useHead({
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
 }
+/* Segunda tentativa, 2026-08-19: a primeira ia para pêssego-claro, que lia
+   como suco de laranja e não como calor. Coral mais saturado no brilho e o
+   ameno saiu do cinza-azulado neutro para verde-água, que tem identidade
+   própria em vez de ser "não-calor-não-frio" por eliminação. */
 .clima--hot::before {
   background:
-    radial-gradient(120% 150% at 84% -25%, rgb(255 205 130 / 88%), transparent 62%),
-    linear-gradient(155deg, #ffe6ba 0%, #ffd8a0 32%, #f6c78a 66%, var(--paper-2) 100%);
+    radial-gradient(120% 150% at 86% -20%, rgb(255 122 84 / 60%), transparent 60%),
+    linear-gradient(155deg, #ffd0b3 0%, #ffc194 35%, #f5c9a8 68%, var(--paper-2) 100%);
 }
 .clima--mild::before {
   background:
-    radial-gradient(120% 150% at 20% -30%, rgb(255 255 255 / 60%), transparent 58%),
-    linear-gradient(155deg, #d9e5e9 0%, #cddadf 38%, #e2e9eb 74%, var(--paper-2) 100%);
+    radial-gradient(120% 150% at 20% -25%, rgb(79 174 156 / 42%), transparent 60%),
+    linear-gradient(155deg, #c9e2da 0%, #bcd8cf 40%, #dbe6e0 75%, var(--paper-2) 100%);
 }
 .clima--cold::before {
   background:
-    radial-gradient(120% 150% at 50% -35%, rgb(255 255 255 / 75%), transparent 58%),
-    linear-gradient(155deg, #d4e2ee 0%, #c2d5e5 34%, #e8eef4 72%, var(--paper-2) 100%);
+    radial-gradient(120% 150% at 50% -25%, rgb(79 127 196 / 40%), transparent 60%),
+    linear-gradient(155deg, #c3d6ec 0%, #aec7e6 35%, #dde8f3 72%, var(--paper-2) 100%);
 }
 .clima--manual {
   color: var(--ink-inv);
@@ -717,4 +748,6 @@ useHead({
 .alt__go { color: var(--ink-4); }
 .alt__tag { padding: var(--s1) var(--s2); border-radius: var(--r-full); background: var(--ink); color: var(--ink-inv); }
 .alts__note { margin-top: var(--s4); color: var(--ink-4); font-size: var(--fs-xs); line-height: 1.45; }
+
+.nome-sheet__actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s2); }
 </style>

@@ -125,37 +125,10 @@ useHead({ title: 'Ajustes · Allegorio' })
       </p>
     </header>
 
-    <section v-for="group in grouped" :key="group.kind" class="group rise rise-1">
-      <div class="sec-head">
-        <h2 class="sec-head__title">
-          <AppIcon :name="group.kind === 'scent' ? 'scent' : 'hanger'" size="1.0625rem" />
-          {{ group.label }}
-        </h2>
-        <span class="label dimmer">{{ group.list.length }}</span>
-      </div>
-
-      <ul class="cats card card--flat">
-        <li v-for="category in group.list" :key="category.id">
-          <button type="button" class="cat" @click="openEdit(category)">
-            <span class="cat__copy">
-              <span class="cat__name">{{ category.name }}</span>
-              <span class="cat__role label dimmer">{{ ROLE_LABELS[category.role] }}</span>
-            </span>
-            <span class="cat__count num">{{ counts.get(category.id) ?? 0 }}</span>
-            <AppIcon name="chevron" size="1rem" class="cat__go" />
-          </button>
-        </li>
-      </ul>
-    </section>
-
-    <p v-if="notice" class="settings__notice" role="status">{{ notice }}</p>
-
-    <button type="button" class="btn btn--ghost btn--full settings__add rise rise-2" @click="createOpen = true">
-      <AppIcon name="plus" size="1.0625rem" />
-      Nova categoria
-    </button>
-
-    <section v-if="configured" class="account rise rise-3">
+    <!-- a conta vem antes das categorias: é a primeira coisa que alguém quer
+         conferir ao abrir ajustes, e um acervo com muitas categorias faria
+         rolar bastante para chegar até aqui lá embaixo -->
+    <section v-if="configured" class="account rise rise-1">
       <div class="sec-head">
         <h2 class="sec-head__title"><AppIcon name="sun" size="1.0625rem" />Conta</h2>
       </div>
@@ -191,6 +164,36 @@ useHead({ title: 'Ajustes · Allegorio' })
         <span class="account__nota">É o nome que a tela de hoje usa para te cumprimentar.</span>
       </label>
     </section>
+
+    <section v-for="group in grouped" :key="group.kind" class="group rise rise-2">
+      <div class="sec-head">
+        <h2 class="sec-head__title">
+          <AppIcon :name="group.kind === 'scent' ? 'scent' : 'hanger'" size="1.0625rem" />
+          {{ group.label }}
+        </h2>
+        <span class="label dimmer">{{ group.list.length }}</span>
+      </div>
+
+      <ul class="cats card card--flat">
+        <li v-for="category in group.list" :key="category.id">
+          <button type="button" class="cat" @click="openEdit(category)">
+            <span class="cat__copy">
+              <span class="cat__name">{{ category.name }}</span>
+              <span class="cat__role label dimmer">{{ ROLE_LABELS[category.role] }}</span>
+            </span>
+            <span class="cat__count num">{{ counts.get(category.id) ?? 0 }}</span>
+            <AppIcon name="chevron" size="1rem" class="cat__go" />
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <p v-if="notice" class="settings__notice" role="status">{{ notice }}</p>
+
+    <button type="button" class="btn btn--ghost btn--full settings__add rise rise-3" @click="createOpen = true">
+      <AppIcon name="plus" size="1.0625rem" />
+      Nova categoria
+    </button>
 
     <section class="data rise rise-4">
       <div class="sec-head">
@@ -378,7 +381,10 @@ useHead({ title: 'Ajustes · Allegorio' })
 }
 .settings__add { margin-top: var(--s5); }
 
-.account { margin-top: var(--s8); padding-top: var(--s6); border-top: 1px solid var(--line); }
+/* Sem borda de divisor nem margem grande: virou a primeira seção da página, e
+   quem separava do que vinha antes era o botão "Nova categoria" que não existe
+   mais aqui em cima. O respiro já vem do cabeçalho. */
+.account { margin-bottom: var(--s7); }
 .account__row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

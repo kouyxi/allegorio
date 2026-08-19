@@ -189,8 +189,10 @@ Decisões de interação que sustentam isso:
 - cada papel do look troca sozinho, sem refazer a combinação inteira, e a peça
   escolhida à mão fica fixada até a situação ou o clima mudarem;
 - a nota de cada linha mostra o critério que distingue aquela peça. O que vale
-  para o look todo sobe para o bloco "Por quê" e some das linhas, senão cinco
-  linhas repetem a mesma frase;
+  para o look todo saía das linhas e subia para um bloco "Por quê" abaixo do
+  baralho; ele saiu de cena em 2026-08-19 por não parecer útil no uso real.
+  `buildLook` continua calculando `reasons` (é testado e outras telas podem
+  usar), só não há mais nenhuma tela renderizando;
 - "Usei hoje" grava a data de uso nas peças, que é o dado que o recomendador já
   lê para dar a vez a quem está parado. Usar o aplicativo melhora a próxima
   sugestão. É desfazível: o botão de desfazer aparece ao lado assim que o uso é
@@ -212,7 +214,18 @@ Decisões de interação que sustentam isso:
   temperatura (calor, ameno, frio), a única cor fora de fotografia que a
   interface admite, porque ali a cor é a leitura real do clima. Manual apaga o
   gradiente e fecha em preto sólido, porque naquele estado o valor deixou de ser
-  uma leitura de verdade.
+  uma leitura de verdade. A primeira paleta ia para pêssego-claro no calor, e
+  lia como suco de laranja em vez de temperatura; revisada no mesmo dia para
+  coral mais saturado e um ameno que saiu do cinza-azulado neutro para
+  verde-água, com identidade própria em vez de ser "nem calor nem frio" por
+  eliminação;
+- **a conta aparece primeiro em Ajustes**, antes das categorias, porque é a
+  primeira coisa que alguém quer conferir ao abrir a tela, e um acervo com
+  muitas categorias fazia rolar bastante para chegar até ela lá embaixo. Quem
+  tem sessão remota e nunca definiu nome recebe a pergunta uma vez, numa folha
+  na própria tela Hoje, e não escondida num campo de Ajustes que ninguém visita
+  sem motivo; "Agora não" grava uma marca local para não perguntar de novo
+  neste navegador, e o campo em Ajustes continua disponível a qualquer momento.
 
 ## Gesto lateral e toque, corrigidos em 2026-08-19
 
