@@ -1,4 +1,4 @@
-import type { OpenBeautyFactsPayload } from '#shared/perfume'
+import type { OpenBeautyFactsPayload, OpenBeautyFactsSearchPayload } from '#shared/perfume'
 
 const FIELDS = [
   'product_name', 'product_name_pt', 'product_name_en', 'brands', 'quantity',
@@ -16,8 +16,27 @@ export async function fetchOpenBeautyFacts(barcode: string): Promise<OpenBeautyF
   )
 }
 
-export function safeCatalogImageUrl(payload: OpenBeautyFactsPayload): string | undefined {
-  const raw = payload.product?.image_front_url
+/** O v2 ainda não oferece texto livre. O endpoint v1 é o caminho documentado
+ * pelo próprio projeto para nome e marca enquanto o Search-a-licious não fica
+ * disponível para este catálogo. */
+export async function searchOpenBeautyFacts(query: string): Promise<OpenBeautyFactsSearchPayload> {
+  return $fetch<OpenBeautyFactsSearchPayload>('https://world.openbeautyfacts.org/cgi/search.pl', {
+    query: {
+      search_terms: query,
+      search_simple: 1,
+      action: 'process',
+      json: 1,
+      page: 1,
+      page_size: 12,
+      sort_by: 'unique_scans_n',
+      fields: `code,${FIELDS}`
+    },
+    timeout: 7000,
+    headers: { 'user-agent': 'Allegorio/0.1 (https://app.allegorio.com)' }
+  })
+}
+
+export function safeOpenBeautyFactsImageUrl(raw?: string): string | undefined {
   if (!raw) return undefined
 
   try {
@@ -27,4 +46,8 @@ export function safeCatalogImageUrl(payload: OpenBeautyFactsPayload): string | u
   } catch {
     return undefined
   }
+}
+
+export function safeCatalogImageUrl(payload: OpenBeautyFactsPayload): string | undefined {
+  return safeOpenBeautyFactsImageUrl(payload.product?.image_front_url)
 }

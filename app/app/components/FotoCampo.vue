@@ -85,7 +85,7 @@ function limpar() {
     <p class="foto__note">
       {{ tipo === 'garment'
         ? 'Duas camisetas pretas viram o mesmo desenho. A foto é o que separa uma da outra.'
-        : 'Fotografe o frasco ou importe a imagem encontrada pelo código de barras.' }}
+        : 'Fotografe o frasco ou importe a imagem encontrada na busca do catálogo.' }}
     </p>
 
     <div class="foto__quadro" :class="{ 'foto__quadro--xadrez': transparente }">

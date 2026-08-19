@@ -1,102 +1,100 @@
 <script setup lang="ts">
-import type { PerfumeCatalogItem, PerfumeLookupResponse } from '#shared/perfume'
-import { normalizeBarcode } from '#shared/perfume'
+import type { PerfumeCatalogItem, PerfumeSearchResponse } from '#shared/perfume'
+import { normalizePerfumeQuery } from '#shared/perfume'
 
 const emit = defineEmits<{
   usar: [item: PerfumeCatalogItem, imagem?: Blob]
 }>()
 
-const codigo = ref('')
-const resultado = ref<PerfumeCatalogItem | null>(null)
-const estado = ref<'ocioso' | 'lendo' | 'buscando' | 'baixando' | 'erro'>('ocioso')
+const termo = ref('')
+const resultados = ref<PerfumeCatalogItem[]>([])
+const estado = ref<'ocioso' | 'buscando' | 'baixando' | 'erro'>('ocioso')
 const aviso = ref('')
-const scanner = ref<HTMLInputElement | null>(null)
-const detectorDisponivel = ref(false)
+const escolhendo = ref('')
+let timer: ReturnType<typeof setTimeout> | undefined
+let buscaAtual = 0
 
-const ocupado = computed(() => ['lendo', 'buscando', 'baixando'].includes(estado.value))
+const buscando = computed(() => estado.value === 'buscando')
 
-onMounted(async () => {
-  if (!('BarcodeDetector' in window)) return
-  try {
-    const formats = await BarcodeDetector.getSupportedFormats()
-    detectorDisponivel.value = formats.some(format => ['ean_13', 'ean_8', 'upc_a', 'upc_e'].includes(format))
-  } catch {
-    detectorDisponivel.value = false
-  }
-})
+function imageProxy(item: PerfumeCatalogItem) {
+  return item.imageUrl
+    ? `/api/perfume-image?url=${encodeURIComponent(item.imageUrl)}`
+    : `/api/perfume-image?barcode=${item.barcode}`
+}
 
 async function buscar() {
-  const barcode = normalizeBarcode(codigo.value)
-  resultado.value = null
+  if (timer) {
+    clearTimeout(timer)
+    timer = undefined
+  }
+  const query = normalizePerfumeQuery(termo.value)
+  const id = ++buscaAtual
   aviso.value = ''
-  if (!barcode) {
-    estado.value = 'erro'
-    aviso.value = 'Digite os 8, 12, 13 ou 14 números do código de barras.'
+
+  if (!query) {
+    resultados.value = []
+    estado.value = termo.value.trim() ? 'erro' : 'ocioso'
+    if (termo.value.trim()) aviso.value = 'Digite ao menos duas letras do nome ou da marca.'
     return
   }
 
-  codigo.value = barcode
   estado.value = 'buscando'
   try {
-    const response = await $fetch<PerfumeLookupResponse>(`/api/perfume/${barcode}`)
-    if (!response.found || !response.item) {
-      estado.value = 'erro'
-      aviso.value = 'Esse perfume ainda não está no Open Beauty Facts. Você pode preencher a ficha manualmente.'
-      return
-    }
-    resultado.value = response.item
+    const response = await $fetch<PerfumeSearchResponse>('/api/perfume/search', {
+      query: { q: query }
+    })
+    if (id !== buscaAtual) return
+
+    resultados.value = response.items
     estado.value = 'ocioso'
+    if (!response.items.length) {
+      aviso.value = 'Não encontrei esse perfume. Você pode preencher a ficha manualmente logo abaixo.'
+    }
   } catch {
+    if (id !== buscaAtual) return
+    resultados.value = []
     estado.value = 'erro'
     aviso.value = 'Não consegui consultar o catálogo agora. Tente de novo ou preencha manualmente.'
   }
 }
 
-async function lerCodigo(event: Event) {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  input.value = ''
-  if (!file) return
-
-  estado.value = 'lendo'
+watch(termo, () => {
+  if (timer) clearTimeout(timer)
+  /* Invalida uma resposta que ainda esteja viajando assim que o texto muda,
+     sem esperar os 500 ms da próxima busca. */
+  buscaAtual += 1
   aviso.value = ''
-  let bitmap: ImageBitmap | null = null
-  try {
-    bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' })
-    const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] })
-    const codes = await detector.detect(bitmap)
-    const barcode = codes.map(entry => normalizeBarcode(entry.rawValue)).find(Boolean)
-    if (!barcode) throw new Error('sem-codigo')
-    codigo.value = barcode
-    await buscar()
-  } catch {
-    estado.value = 'erro'
-    aviso.value = 'Não consegui ler o código. Aproxime a câmera, evite reflexo ou digite os números.'
-  } finally {
-    bitmap?.close()
+  if (!termo.value.trim()) {
+    resultados.value = []
+    estado.value = 'ocioso'
+    return
   }
-}
+  timer = setTimeout(buscar, 500)
+})
 
-async function usar() {
-  if (!resultado.value) return
+onBeforeUnmount(() => {
+  if (timer) clearTimeout(timer)
+})
+
+async function usar(item: PerfumeCatalogItem) {
   estado.value = 'baixando'
+  escolhendo.value = item.barcode
   aviso.value = ''
 
   try {
-    const imagem = resultado.value.hasImage
-      ? await $fetch<Blob>('/api/perfume-image', {
-          query: { barcode: resultado.value.barcode },
-          responseType: 'blob'
-        })
+    const imagem = item.hasImage
+      ? await $fetch<Blob>(imageProxy(item), { responseType: 'blob' })
       : undefined
-    emit('usar', resultado.value, imagem)
+    emit('usar', item, imagem)
     estado.value = 'ocioso'
   } catch {
-    /* Metadata is still useful if the licensed image disappeared between the
-       lookup and import. The user can photograph the bottle afterwards. */
-    emit('usar', resultado.value)
+    /* Os dados ainda são úteis se a imagem licenciada sumiu entre a busca e a
+       importação. A pessoa pode fotografar o frasco depois. */
+    emit('usar', item)
     estado.value = 'erro'
     aviso.value = 'Preenchi a ficha, mas não consegui importar a imagem. Você ainda pode fotografar o frasco.'
+  } finally {
+    escolhendo.value = ''
   }
 }
 </script>
@@ -104,61 +102,106 @@ async function usar() {
 <template>
   <section class="lookup card">
     <div class="sec-head">
-      <h2 class="sec-head__title"><AppIcon name="barcode" size="1.0625rem" />Buscar perfume</h2>
+      <h2 class="sec-head__title"><AppIcon name="search" size="1.0625rem" />Buscar perfume</h2>
+      <span v-if="buscando" class="label dimmer">Buscando…</span>
     </div>
-    <p class="lookup__note">Leia o código da caixa ou digite os números. A busca usa o catálogo aberto Open Beauty Facts.</p>
+    <p class="lookup__note">
+      Digite o nome ou a marca. A busca usa o catálogo aberto Open Beauty Facts.
+    </p>
 
-    <div class="lookup__form">
+    <form class="lookup__form" role="search" @submit.prevent="buscar">
       <label class="field">
-        <span class="label">Código de barras</span>
-        <input v-model="codigo" class="input num" inputmode="numeric" autocomplete="off" placeholder="789…" @keydown.enter.prevent="buscar">
+        <span class="label">Nome ou marca</span>
+        <div class="lookup__input-wrap">
+          <input
+            v-model="termo"
+            class="input"
+            type="search"
+            autocomplete="off"
+            enterkeyhint="search"
+            placeholder="Ex.: Dior Sauvage"
+            maxlength="80"
+          >
+          <button type="submit" class="btn btn--ghost btn--sm" :disabled="buscando || termo.trim().length < 2">
+            <AppIcon name="search" size="1rem" />
+            Buscar
+          </button>
+        </div>
       </label>
-      <div class="lookup__actions">
-        <button type="button" class="btn btn--ghost" :disabled="ocupado" @click="buscar">
-          <AppIcon name="search" size="1rem" />
-          {{ estado === 'buscando' ? 'Buscando…' : 'Buscar' }}
-        </button>
-        <button v-if="detectorDisponivel" type="button" class="btn btn--quiet" :disabled="ocupado" @click="scanner?.click()">
-          <AppIcon name="camera" size="1rem" />Ler com a câmera
-        </button>
-        <input ref="scanner" class="sr-only" type="file" accept="image/*" capture="environment" @change="lerCodigo">
-      </div>
-    </div>
+    </form>
 
-    <div v-if="resultado" class="lookup__result">
-      <img
-        v-if="resultado.hasImage"
-        :src="`/api/perfume-image?barcode=${resultado.barcode}`"
-        alt=""
-        class="lookup__image"
-      >
-      <div class="lookup__copy">
-        <span class="label dimmer">Encontrado</span>
-        <strong>{{ resultado.name }}</strong>
-        <span>{{ resultado.brand || 'Marca não informada' }}<template v-if="resultado.volumeMl"> · {{ resultado.volumeMl }} ml</template></span>
-      </div>
-      <button type="button" class="btn btn--full" :disabled="ocupado" @click="usar">
-        <AppIcon name="check" size="1rem" />
-        {{ estado === 'baixando' ? 'Importando…' : 'Usar esta ficha' }}
-      </button>
-      <p class="lookup__license">Dados: ODbL 1.0. Imagem, quando disponível: CC BY-SA. Atribuição a Open Beauty Facts contributors.</p>
-    </div>
+    <ul v-if="resultados.length" class="lookup__results" aria-label="Perfumes encontrados">
+      <li v-for="item in resultados" :key="item.barcode">
+        <button
+          type="button"
+          class="lookup__option"
+          :disabled="estado === 'baixando'"
+          @click="usar(item)"
+        >
+          <span class="lookup__visual">
+            <img v-if="item.hasImage" :src="imageProxy(item)" alt="" loading="lazy">
+            <AppIcon v-else name="scent" size="1.25rem" />
+          </span>
+          <span class="lookup__copy">
+            <strong>{{ item.name }}</strong>
+            <span>
+              {{ item.brand || 'Marca não informada' }}<template v-if="item.volumeMl"> · {{ item.volumeMl }} ml</template>
+            </span>
+          </span>
+          <span class="lookup__choose label">
+            {{ escolhendo === item.barcode ? 'Importando…' : 'Usar' }}
+          </span>
+        </button>
+      </li>
+    </ul>
 
-    <p v-if="aviso" class="lookup__warning" role="status"><AppIcon name="info" size="1rem" />{{ aviso }}</p>
+    <p v-if="resultados.length" class="lookup__license">
+      Dados: ODbL 1.0. Imagens, quando disponíveis: CC BY-SA. Open Beauty Facts contributors.
+    </p>
+    <p v-if="aviso" class="lookup__warning" role="status">
+      <AppIcon name="info" size="1rem" />{{ aviso }}
+    </p>
   </section>
 </template>
 
 <style scoped>
 .lookup { display: grid; gap: var(--s3); margin-top: var(--s7); padding: var(--pad); }
 .lookup__note, .lookup__license { color: var(--ink-3); font-size: var(--fs-xs); line-height: 1.45; }
-.lookup__form { display: grid; gap: var(--s3); }
-.lookup__actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
-.lookup__result { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s3); align-items: center; padding-top: var(--s3); border-top: 1px solid var(--line-2); }
-.lookup__image { width: 4.5rem; height: 4.5rem; object-fit: contain; border-radius: var(--r-sm); background: var(--paper-2); }
+.lookup__input-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s2); }
+.lookup__results { overflow: hidden; border-top: 1px solid var(--line-2); }
+.lookup__results li + li { border-top: 1px solid var(--line-2); }
+.lookup__option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  padding: var(--s3) 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.lookup__option:not(:disabled):active { transform: scale(0.99); }
+.lookup__visual {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  overflow: hidden;
+  border-radius: var(--r-sm);
+  background: var(--paper-2);
+  color: var(--ink-4);
+}
+.lookup__visual img { width: 100%; height: 100%; object-fit: contain; }
 .lookup__copy { display: grid; gap: 0.125rem; min-width: 0; }
 .lookup__copy strong, .lookup__copy span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lookup__copy strong { font-size: var(--fs-sm); font-variation-settings: "wght" 640; }
 .lookup__copy span { color: var(--ink-3); font-size: var(--fs-xs); }
-.lookup__result .btn, .lookup__license { grid-column: 1 / -1; }
+.lookup__choose { color: var(--ink-3); }
 .lookup__warning { display: flex; gap: var(--s2); align-items: flex-start; color: var(--ink-3); font-size: var(--fs-xs); }
-@media (max-width: 22rem) { .lookup__actions { grid-template-columns: 1fr; } }
+@media (max-width: 22rem) {
+  .lookup__input-wrap { grid-template-columns: 1fr; }
+  .lookup__input-wrap .btn { width: 100%; }
+}
 </style>

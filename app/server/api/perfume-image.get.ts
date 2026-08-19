@@ -1,12 +1,19 @@
 import { normalizeBarcode } from '#shared/perfume'
-import { fetchOpenBeautyFacts, safeCatalogImageUrl } from '../utils/openBeautyFacts'
+import {
+  fetchOpenBeautyFacts,
+  safeCatalogImageUrl,
+  safeOpenBeautyFactsImageUrl
+} from '../utils/openBeautyFacts'
 
 export default defineEventHandler(async (event) => {
-  const barcode = normalizeBarcode(String(getQuery(event).barcode ?? ''))
-  if (!barcode) throw createError({ statusCode: 400, statusMessage: 'Código de barras inválido.' })
+  const query = getQuery(event)
+  const directUrl = safeOpenBeautyFactsImageUrl(String(query.url ?? ''))
+  const barcode = normalizeBarcode(String(query.barcode ?? ''))
+  if (!directUrl && !barcode) {
+    throw createError({ statusCode: 400, statusMessage: 'Referência de imagem inválida.' })
+  }
 
-  const payload = await fetchOpenBeautyFacts(barcode)
-  const imageUrl = safeCatalogImageUrl(payload)
+  const imageUrl = directUrl || safeCatalogImageUrl(await fetchOpenBeautyFacts(barcode!))
   if (!imageUrl) throw createError({ statusCode: 404, statusMessage: 'Imagem não encontrada.' })
 
   const response = await fetch(imageUrl, {

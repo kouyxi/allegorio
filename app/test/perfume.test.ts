@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   catalogItemFromPayload,
+  catalogItemFromProduct,
   concentrationFromText,
   normalizeBarcode,
+  normalizePerfumeQuery,
   volumeFromQuantity
 } from '#shared/perfume'
 
@@ -11,6 +13,12 @@ describe('catálogo de perfumes', () => {
     expect(normalizeBarcode('789 1234-567890')).toBe('7891234567890')
     expect(normalizeBarcode('123')).toBeUndefined()
     expect(normalizeBarcode('12345678')).toBe('12345678')
+  })
+
+  it('normaliza a busca por nome ou marca e rejeita termos ruins', () => {
+    expect(normalizePerfumeQuery('  Dior   Sauvage ')).toBe('Dior Sauvage')
+    expect(normalizePerfumeQuery('D')).toBeUndefined()
+    expect(normalizePerfumeQuery('a'.repeat(81))).toBeUndefined()
   })
 
   it('converte volume para ml', () => {
@@ -44,5 +52,20 @@ describe('catálogo de perfumes', () => {
 
   it('não inventa um registro sem nome', () => {
     expect(catalogItemFromPayload({ product: { brands: 'Casa' } }, '12345678')).toBeUndefined()
+  })
+
+  it('traduz um resultado da pesquisa textual usando o código do produto', () => {
+    expect(catalogItemFromProduct({
+      code: '7891234567890',
+      product_name: 'Sauvage Eau de Toilette',
+      brands: 'Dior',
+      image_front_url: 'https://images.openfoodfacts.org/images/a.jpg'
+    })).toMatchObject({
+      barcode: '7891234567890',
+      name: 'Sauvage Eau de Toilette',
+      brand: 'Dior',
+      concentration: 'EDT',
+      hasImage: true
+    })
   })
 })

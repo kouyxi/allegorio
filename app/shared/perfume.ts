@@ -10,6 +10,8 @@ export interface PerfumeCatalogItem {
   volumeMl?: number
   concentration?: 'EDC' | 'EDT' | 'EDP' | 'Extrait'
   hasImage: boolean
+  /** URL remota só atravessa o proxy do aplicativo; nunca é gravada no item. */
+  imageUrl?: string
   sourceUrl: string
   sourceProvider: string
   sourceLicense: string
@@ -22,23 +24,41 @@ export interface PerfumeLookupResponse {
   reason?: 'invalid-barcode' | 'not-found' | 'unavailable'
 }
 
+export interface PerfumeSearchResponse {
+  items: PerfumeCatalogItem[]
+  reason?: 'invalid-query' | 'unavailable'
+}
+
+export interface OpenBeautyFactsProduct {
+  code?: string
+  product_name?: string
+  product_name_pt?: string
+  product_name_en?: string
+  brands?: string
+  quantity?: string
+  image_front_url?: string
+  url?: string
+}
+
 export interface OpenBeautyFactsPayload {
   status?: number | string
-  product?: {
-    product_name?: string
-    product_name_pt?: string
-    product_name_en?: string
-    brands?: string
-    quantity?: string
-    image_front_url?: string
-    url?: string
-  }
+  product?: OpenBeautyFactsProduct
+}
+
+export interface OpenBeautyFactsSearchPayload {
+  count?: number
+  products?: OpenBeautyFactsProduct[]
 }
 
 /** GTINs may arrive grouped with spaces or punctuation printed on the box. */
 export function normalizeBarcode(value: string): string | undefined {
   const digits = value.replace(/\D/g, '')
   return [8, 12, 13, 14].includes(digits.length) ? digits : undefined
+}
+
+export function normalizePerfumeQuery(value: string): string | undefined {
+  const query = value.trim().replace(/\s+/g, ' ')
+  return query.length >= 2 && query.length <= 80 ? query : undefined
 }
 
 export function volumeFromQuantity(value?: string): number | undefined {
@@ -68,23 +88,31 @@ export function catalogItemFromPayload(
   payload: OpenBeautyFactsPayload,
   barcode: string
 ): PerfumeCatalogItem | undefined {
-  const product = payload.product
+  return catalogItemFromProduct(payload.product, barcode)
+}
+
+export function catalogItemFromProduct(
+  product: OpenBeautyFactsProduct | undefined,
+  barcode = product?.code ?? ''
+): PerfumeCatalogItem | undefined {
+  const validBarcode = normalizeBarcode(barcode)
   const name = product?.product_name_pt?.trim()
     || product?.product_name?.trim()
     || product?.product_name_en?.trim()
-  if (!product || !name) return undefined
+  if (!product || !name || !validBarcode) return undefined
 
   const providerUrl = product.url?.startsWith('https://world.openbeautyfacts.org/')
     ? product.url
-    : `https://world.openbeautyfacts.org/product/${barcode}`
+    : `https://world.openbeautyfacts.org/product/${validBarcode}`
 
   return {
-    barcode,
+    barcode: validBarcode,
     name,
     brand: product.brands?.split(',')[0]?.trim() ?? '',
     volumeMl: volumeFromQuantity(product.quantity),
     concentration: concentrationFromText(`${name} ${product.quantity ?? ''}`),
     hasImage: Boolean(product.image_front_url),
+    imageUrl: product.image_front_url,
     sourceUrl: providerUrl,
     sourceProvider: PERFUME_PROVIDER,
     sourceLicense: `${PERFUME_DATA_LICENSE} (dados) · ${PERFUME_IMAGE_LICENSE} (imagem)`,
