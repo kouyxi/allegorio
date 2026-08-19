@@ -1,0 +1,31 @@
+{
+  "name": "allegorio-app",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/preparar-recorte.mjs && nuxt build",
+    "deploy": "pnpm build && wrangler deploy",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "recorte": "node scripts/preparar-recorte.mjs",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.111.0",
+    "@vite-pwa/nuxt": "^1.1.1",
+    "nuxt": "^4.5.2",
+    "onnxruntime-web": "^1.27.0",
+    "vue": "^3.5.41",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.2.5",
+    "wrangler": "^4.119.0"
+  }
+}

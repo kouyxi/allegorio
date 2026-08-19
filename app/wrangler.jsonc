@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "allegorio-app",
+  "compatibility_date": "2026-08-18",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // `main` e `assets` não ficam aqui de propósito. O preset `cloudflare-module`
+  // do Nitro calcula os dois, junta com este arquivo e grava o resultado em
+  // `.output/server/wrangler.json`; declarar aqui só produziria aviso de
+  // configuração ignorada.
+
+  // As `vars` do Worker não são escritas aqui. Elas são montadas em
+  // `nuxt.config.ts` a partir do `.env` do build e entram na configuração
+  // gerada, o que evita duplicar chave em arquivo versionado e evita o pior
+  // caso: uma `vars` vazia neste arquivo apagaria, em execução, o valor que o
+  // build embutiu, e o aplicativo cairia no modo local sem avisar ninguém.
+  //
+  // Se um dia essas chaves forem definidas pelo painel da Cloudflare em vez do
+  // `.env`, elas podem voltar para cá com valor de verdade. A publicável é
+  // pública por natureza, viaja no JavaScript de toda página e quem protege o
+  // dado é a RLS do Postgres. Uma `service_role` nunca entra: ela ignora RLS.
+
+  "observability": {
+    "enabled": true
+  }
+}

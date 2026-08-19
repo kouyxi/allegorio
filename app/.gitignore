@@ -1,0 +1,20 @@
+.nuxt
+.output
+.data
+.nitro
+.wrangler
+.cache
+dist
+node_modules
+.pnpm-store
+coverage
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Binários do recorte de fundo. `pnpm recorte` (ou o próprio build) refaz os dois:
+# a rede vem do release do rembg, o runtime vem de node_modules.
+public/modelos/
+public/ort/

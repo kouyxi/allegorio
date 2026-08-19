@@ -1,0 +1,8 @@
+storeDir: .pnpm-store
+
+allowBuilds:
+  esbuild: true
+  # Vem do onnxruntime-web. O postinstall dele só gera tipagem para o próprio
+  # pacote e nada no aplicativo importa protobuf direto.
+  protobufjs: false
+  workerd: true
