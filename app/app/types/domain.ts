@@ -35,6 +35,10 @@ export interface CollectionItem {
    *  Supabase é assinada e expira, a local é `blob:` e morre com a aba */
   imageUrl?: string
   sourceUrl?: string
+  /** Provenance is populated only when the stored image came from a catalog. */
+  sourceProvider?: string
+  sourceLicense?: string
+  sourceAttribution?: string
   price?: number
   currency: 'BRL'
   color?: string
@@ -119,4 +123,7 @@ export interface NewItemInput {
   volumeMl?: number
   projection?: 'low' | 'moderate' | 'high'
   sourceUrl?: string
+  sourceProvider?: string
+  sourceLicense?: string
+  sourceAttribution?: string
 }

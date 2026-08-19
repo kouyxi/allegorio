@@ -92,7 +92,9 @@ do Nuxt. Se o download falhar, o build segue e a opção de recorte some da tela
 - filtros por tipo, categoria e faixa de preço;
 - categorias com nome editável e papel semântico estável;
 - recomendação determinística por contexto;
-- fotografia da peça, com recorte de fundo opcional no aparelho;
+- fotografia pela câmera traseira ou galeria, com recorte de fundo opcional no aparelho;
+- cadastro rápido de roupa por foto e categoria, com padrões de uso editáveis;
+- busca de perfume por código de barras no Open Beauty Facts, com procedência da imagem;
 - histórico de combinações e lista de peças encostadas;
 - temperatura buscada sozinha, com o seletor manual ganhando dela;
 - autenticação por e-mail e senha, com Supabase Postgres e Storage;

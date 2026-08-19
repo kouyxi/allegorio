@@ -22,6 +22,9 @@ export interface FotoPronta {
   recortada: boolean
   /** URL temporária para prévia; quem cria é quem revoga */
   previa: string
+  /** Cor mais recorrente no objeto recortado. Só é aplicada automaticamente
+   *  quando existe transparência, para a parede não virar a cor da roupa. */
+  corHex?: string
 }
 
 type Tela = OffscreenCanvas | HTMLCanvasElement
@@ -67,6 +70,39 @@ async function codificar(alvo: Tela, comAlfa: boolean): Promise<{ blob: Blob, ti
 
   const reserva = await paraBlob(alvo, comAlfa ? 'image/png' : 'image/jpeg', 0.86)
   return { blob: reserva, tipo: reserva.type || (comAlfa ? 'image/png' : 'image/jpeg') }
+}
+
+export function corDominante(dados: Uint8ClampedArray): string | undefined {
+  const bins = new Map<string, { count: number, r: number, g: number, b: number }>()
+  const step = dados.length > 160_000 ? 16 : 4
+
+  for (let i = 0; i < dados.length; i += step) {
+    const alpha = dados[i + 3] ?? 0
+    if (alpha < 160) continue
+
+    const r = dados[i] ?? 0
+    const g = dados[i + 1] ?? 0
+    const b = dados[i + 2] ?? 0
+    const key = `${r >> 5}:${g >> 5}:${b >> 5}`
+    const bin = bins.get(key) ?? { count: 0, r: 0, g: 0, b: 0 }
+    bin.count += 1
+    bin.r += r
+    bin.g += g
+    bin.b += b
+    bins.set(key, bin)
+  }
+
+  const winner = [...bins.values()].sort((a, b) => b.count - a.count)[0]
+  if (!winner) return undefined
+  const channel = (value: number) => Math.round(value / winner.count).toString(16).padStart(2, '0')
+  return `#${channel(winner.r)}${channel(winner.g)}${channel(winner.b)}`
+}
+
+function corDaTela(alvo: Tela): string | undefined {
+  const amostra = tela(48, 48)
+  const ctx = contexto(amostra)
+  ctx.drawImage(alvo as CanvasImageSource, 0, 0, 48, 48)
+  return corDominante(ctx.getImageData(0, 0, 48, 48).data)
 }
 
 /** Decodifica o arquivo já com a rotação do EXIF aplicada. Sem isso toda foto
@@ -151,12 +187,14 @@ export function reduzir(bitmap: ImageBitmap): Tela {
 
 export async function finalizar(alvo: Tela, recortada: boolean): Promise<FotoPronta> {
   const { blob, tipo } = await codificar(alvo, recortada)
+  const corHex = recortada ? corDaTela(alvo) : undefined
   return {
     blob,
     tipo,
     largura: alvo.width,
     altura: alvo.height,
     recortada,
-    previa: URL.createObjectURL(blob)
+    previa: URL.createObjectURL(blob),
+    corHex
   }
 }

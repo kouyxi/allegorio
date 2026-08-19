@@ -65,7 +65,7 @@ export function useFoto() {
    * 48 MB descomprimidos, e trocar de foto três vezes numa aba já é motivo de
    * o navegador derrubar a página no celular.
    */
-  async function escolher(arquivo: File, tentarRecorte: boolean) {
+  async function escolher(arquivo: File | Blob, tentarRecorte: boolean): Promise<FotoPronta | null> {
     descartar()
     estado.value = 'lendo'
 
@@ -79,7 +79,7 @@ export function useFoto() {
           if (recortada) {
             foto.value = recortada
             estado.value = 'pronto'
-            return
+            return foto.value
           }
         } catch (causa) {
           aviso.value = causa instanceof Error
@@ -90,9 +90,11 @@ export function useFoto() {
 
       foto.value = await finalizar(reduzir(bitmap), false)
       estado.value = 'pronto'
+      return foto.value
     } catch (causa) {
       estado.value = 'erro'
       aviso.value = causa instanceof Error ? causa.message : 'Não consegui ler essa imagem.'
+      return null
     } finally {
       bitmap?.close()
     }

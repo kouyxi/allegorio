@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ItemKind } from '~/types/domain'
 import type { FotoPronta } from '~/utils/imagem'
 
 /**
@@ -12,18 +13,22 @@ import type { FotoPronta } from '~/utils/imagem'
  * e não como foto de bagunça de quarto, mas ele é desligável e nunca bloqueia:
  * falhou, guarda a foto inteira.
  */
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   /** foto que já está gravada no item, quando é edição */
   atual?: string
   atualRecortada?: boolean
-}>()
+  tipo?: ItemKind
+}>(), { tipo: 'garment' })
 
-const emit = defineEmits<{ pronta: [FotoPronta | null], remover: [] }>()
+type OrigemFoto = 'camera' | 'galeria' | 'catalogo'
+
+const emit = defineEmits<{ pronta: [FotoPronta | null, OrigemFoto?], remover: [] }>()
 
 const { estado, progresso, aviso, foto, recorteDisponivel, pesoMb, escolher, descartar } = useFoto()
 
 const recortar = ref(true)
-const entrada = ref<HTMLInputElement | null>(null)
+const camera = ref<HTMLInputElement | null>(null)
+const galeria = ref<HTMLInputElement | null>(null)
 const removida = ref(false)
 
 const ocupado = computed(() => ['lendo', 'baixando', 'recortando'].includes(estado.value))
@@ -39,7 +44,7 @@ const rotulo = computed(() => {
   return ''
 })
 
-async function aoEscolher(evento: Event) {
+async function aoEscolher(evento: Event, origem: OrigemFoto) {
   const campo = evento.target as HTMLInputElement
   const arquivo = campo.files?.[0]
   campo.value = ''
@@ -47,8 +52,17 @@ async function aoEscolher(evento: Event) {
 
   removida.value = false
   await escolher(arquivo, recortar.value)
-  emit('pronta', foto.value)
+  emit('pronta', foto.value, origem)
 }
+
+async function importar(arquivo: Blob) {
+  removida.value = false
+  const pronta = await escolher(arquivo, false)
+  emit('pronta', pronta, 'catalogo')
+  return pronta
+}
+
+defineExpose({ importar })
 
 function limpar() {
   descartar()
@@ -69,7 +83,9 @@ function limpar() {
     </div>
 
     <p class="foto__note">
-      Duas camisetas pretas viram o mesmo desenho. A foto é o que separa uma da outra.
+      {{ tipo === 'garment'
+        ? 'Duas camisetas pretas viram o mesmo desenho. A foto é o que separa uma da outra.'
+        : 'Fotografe o frasco ou importe a imagem encontrada pelo código de barras.' }}
     </p>
 
     <div class="foto__quadro" :class="{ 'foto__quadro--xadrez': transparente }">
@@ -85,16 +101,28 @@ function limpar() {
     </div>
 
     <div class="foto__acoes">
-      <button type="button" class="btn btn--ghost" :disabled="ocupado" @click="entrada?.click()">
-        <AppIcon name="plus" size="1.0625rem" />
-        {{ mostra ? 'Trocar foto' : 'Escolher foto' }}
+      <button type="button" class="btn btn--ghost" :disabled="ocupado" @click="camera?.click()">
+        <AppIcon name="camera" size="1.0625rem" />
+        Tirar foto
+      </button>
+      <button type="button" class="btn btn--quiet" :disabled="ocupado" @click="galeria?.click()">
+        <AppIcon name="layers" size="1.0625rem" />
+        {{ mostra ? 'Trocar da galeria' : 'Escolher da galeria' }}
       </button>
       <input
-        ref="entrada"
+        ref="camera"
         class="sr-only"
         type="file"
         accept="image/*"
-        @change="aoEscolher"
+        capture="environment"
+        @change="aoEscolher($event, 'camera')"
+      >
+      <input
+        ref="galeria"
+        class="sr-only"
+        type="file"
+        accept="image/*"
+        @change="aoEscolher($event, 'galeria')"
       >
     </div>
 
@@ -166,7 +194,7 @@ function limpar() {
 }
 .foto__rotulo { font-size: var(--fs-micro); font-variation-settings: "wght" 620; }
 
-.foto__acoes { display: grid; }
+.foto__acoes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s2); }
 
 .foto__opcao {
   display: grid;
@@ -192,4 +220,5 @@ function limpar() {
   line-height: 1.45;
 }
 .foto__aviso .ico { margin-top: 0.125rem; }
+@media (max-width: 22rem) { .foto__acoes { grid-template-columns: 1fr; } }
 </style>

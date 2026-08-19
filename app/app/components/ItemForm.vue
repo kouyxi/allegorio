@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import {
+  PERFUME_ATTRIBUTION, PERFUME_DATA_LICENSE, PERFUME_PROVIDER,
+  type PerfumeCatalogItem
+} from '#shared/perfume'
 import { RECOMMENDATION_CONTEXTS } from '~/data/demo'
 import type { Climate, CollectionItem, ItemKind, NewItemInput, Ownership } from '~/types/domain'
 import type { FotoPronta } from '~/utils/imagem'
+import { defaultsForCategory } from '~/utils/itemDefaults'
 import { CLIMATE_ICONS, CLIMATE_LABELS, CONTEXT_ICONS } from '~/utils/recommend'
 import { flatFor, quandoUsado } from '~/utils/format'
 
@@ -14,6 +19,7 @@ const props = defineProps<{ item?: CollectionItem }>()
 const router = useRouter()
 const { categories, addItem, updateItem, removeItem, uploadImage } = useCollection()
 const fotoAtual = useImagemDoItem(() => props.item)
+const fotoCampo = ref<{ importar: (arquivo: Blob) => Promise<FotoPronta | null> } | null>(null)
 
 const editing = computed(() => Boolean(props.item))
 
@@ -41,7 +47,10 @@ const form = reactive({
   projection: props.item?.projection ?? 'moderate',
   price: props.item?.price,
   description: props.item?.description ?? '',
-  sourceUrl: props.item?.sourceUrl ?? ''
+  sourceUrl: props.item?.sourceUrl ?? '',
+  sourceProvider: props.item?.sourceProvider ?? '',
+  sourceLicense: props.item?.sourceLicense ?? '',
+  sourceAttribution: props.item?.sourceAttribution ?? ''
 })
 
 const formality = ref(String(props.item?.formality ?? 2))
@@ -50,6 +59,7 @@ const contexts = ref<string[]>([...(props.item?.contexts ?? ['everyday'])])
 const error = ref('')
 const salvando = ref(false)
 const confirmingDelete = ref(false)
+const detalhesAbertos = ref(Boolean(props.item) || kind.value === 'scent')
 
 /* `null` distingue os dois casos que a gravação trata diferente: nada mudou na
    foto, ou a pessoa removeu a que existia. */
@@ -59,6 +69,12 @@ const fotoRemovida = ref(false)
 const kindCategories = computed(() => categories.value.filter(category => category.kind === kind.value))
 const category = computed(() => categories.value.find(entry => entry.id === form.categoryId))
 
+watch(kindCategories, (available) => {
+  if (!available.some(entry => entry.id === form.categoryId)) {
+    form.categoryId = available[0]?.id ?? ''
+  }
+}, { immediate: true })
+
 /* Ao trocar o tipo, a categoria antiga deixa de valer. Na edição isso só
    dispara se a pessoa mudar o tipo de propósito, e aí a troca é desejada. */
 watch(kind, (value, previous) => {
@@ -67,6 +83,15 @@ watch(kind, (value, previous) => {
     form.categoryId = kindCategories.value[0]?.id ?? ''
   }
   if (value === 'scent' && !props.item && form.colorHex === '#b9b3a6') form.colorHex = '#c2a277'
+  if (!props.item) detalhesAbertos.value = value === 'scent'
+}, { immediate: true })
+
+watch(() => form.categoryId, (id) => {
+  if (props.item || kind.value !== 'garment') return
+  const defaults = defaultsForCategory(categories.value.find(entry => entry.id === id))
+  formality.value = String(defaults.formality)
+  climates.value = defaults.climates
+  contexts.value = defaults.contexts
 }, { immediate: true })
 
 function toggleClimate(value: Climate) {
@@ -83,17 +108,19 @@ function toggleContext(value: string) {
 
 const previewFlat = computed(() => flatFor(form.name, category.value?.name, category.value?.role, kind.value))
 const previewFoto = computed(() => fotoNova.value?.previa ?? (fotoRemovida.value ? undefined : fotoAtual.value))
+const safeSourceUrl = computed(() => form.sourceUrl.startsWith('https://') ? form.sourceUrl : undefined)
 
 /* Registro de uso do item, que hoje só existia como número dentro do
    recomendador. Quem edita a peça é quem quer saber se ela anda parada. */
 const uso = computed(() => quandoUsado(props.item?.lastWornAt, props.item?.wearCount))
 
 function collect(): NewItemInput {
+  const defaults = defaultsForCategory(category.value)
   return {
     kind: kind.value,
     ownership: ownership.value,
     categoryId: form.categoryId,
-    name: form.name.trim(),
+    name: form.name.trim() || (kind.value === 'garment' ? defaults.name : ''),
     brand: form.brand.trim(),
     description: form.description.trim(),
     price: form.price,
@@ -102,6 +129,9 @@ function collect(): NewItemInput {
     climates: climates.value,
     contexts: contexts.value.length ? contexts.value : ['everyday'],
     sourceUrl: form.sourceUrl.trim() || undefined,
+    sourceProvider: form.sourceProvider.trim() || undefined,
+    sourceLicense: form.sourceLicense.trim() || undefined,
+    sourceAttribution: form.sourceAttribution.trim() || undefined,
     ...(kind.value === 'garment'
       ? {
           color: form.color.trim() || undefined,
@@ -133,7 +163,7 @@ async function submit() {
   if (salvando.value) return
 
   error.value = ''
-  if (!form.name.trim()) return (error.value = 'Falta o nome da peça.')
+  if (kind.value === 'scent' && !form.name.trim()) return (error.value = 'Falta o nome do perfume.')
   if (!form.categoryId) return (error.value = 'Escolha uma categoria.')
   if (!climates.value.length) return (error.value = 'Marque ao menos um clima.')
 
@@ -166,9 +196,50 @@ async function submit() {
 
 /* `null` chega tanto de uma leitura que falhou quanto de "remover". Só o
    segundo caso emite `remover`, e é ele que decide apagar a foto gravada. */
-function aoTrocarFoto(pronta: FotoPronta | null) {
+function limparProcedenciaDaImagem() {
+  if (form.sourceProvider === PERFUME_PROVIDER && form.sourceUrl) {
+    form.sourceLicense = `${PERFUME_DATA_LICENSE} (dados)`
+    form.sourceAttribution = PERFUME_ATTRIBUTION
+    return
+  }
+  form.sourceProvider = ''
+  form.sourceLicense = ''
+  form.sourceAttribution = ''
+}
+
+function aoTrocarFoto(pronta: FotoPronta | null, origem?: 'camera' | 'galeria' | 'catalogo') {
   fotoNova.value = pronta
-  if (pronta) fotoRemovida.value = false
+  if (pronta) {
+    fotoRemovida.value = false
+    if (kind.value === 'garment' && pronta.corHex) form.colorHex = pronta.corHex
+  }
+  if (origem && origem !== 'catalogo') limparProcedenciaDaImagem()
+}
+
+async function usarPerfume(item: PerfumeCatalogItem, imagem?: Blob) {
+  form.name = item.name
+  form.brand = item.brand
+  if (item.volumeMl) form.volumeMl = item.volumeMl
+  if (item.concentration) form.concentration = item.concentration
+  form.sourceUrl = item.sourceUrl
+  form.sourceProvider = item.sourceProvider
+  form.sourceLicense = `${PERFUME_DATA_LICENSE} (dados)`
+  form.sourceAttribution = item.sourceAttribution
+
+  if (imagem) {
+    const pronta = await fotoCampo.value?.importar(imagem)
+    if (pronta) {
+      form.sourceProvider = item.sourceProvider
+      form.sourceLicense = item.sourceLicense
+      form.sourceAttribution = item.sourceAttribution
+    }
+  }
+  detalhesAbertos.value = true
+}
+
+function removerFoto() {
+  fotoRemovida.value = true
+  limparProcedenciaDaImagem()
 }
 
 function back() {
@@ -206,7 +277,7 @@ useHead({ title: editing.value ? `Editar · ${props.item?.name}` : 'Adicionar ·
       </div>
       <div class="preview__copy">
         <p class="label dimmer">{{ category?.name ?? 'Sem categoria' }}</p>
-        <strong>{{ form.name || 'Sem nome' }}</strong>
+        <strong>{{ form.name || (kind === 'garment' ? defaultsForCategory(category).name : 'Sem nome') }}</strong>
         <span>{{ form.brand || '—' }}</span>
       </div>
     </section>
@@ -224,171 +295,193 @@ useHead({ title: editing.value ? `Editar · ${props.item?.name}` : 'Adicionar ·
       />
     </div>
 
+    <PerfumeLookup v-if="kind === 'scent' && !editing" class="rise rise-2" @usar="usarPerfume" />
+
     <FotoCampo
+      ref="fotoCampo"
       class="rise rise-2"
       :atual="fotoAtual"
       :atual-recortada="item?.imageCutout"
+      :tipo="kind"
       @pronta="aoTrocarFoto"
-      @remover="fotoRemovida = true"
+      @remover="removerFoto"
     />
+
+    <p v-if="form.sourceProvider" class="new__source rise rise-2">
+      Fonte:
+      <a v-if="safeSourceUrl" :href="safeSourceUrl" target="_blank" rel="noopener noreferrer">{{ form.sourceProvider }}</a><template v-else>{{ form.sourceProvider }}</template>,
+      {{ form.sourceLicense }}. {{ form.sourceAttribution }}.
+    </p>
 
     <section class="group rise rise-3">
       <h2 class="sec-head__title"><AppIcon name="pencil" size="1.0625rem" />Identificação</h2>
 
       <label class="field">
-        <span class="label">Nome</span>
-        <input v-model="form.name" class="input" type="text" placeholder="Camisa oxford" autocomplete="off">
+        <span class="label">Categoria</span>
+        <select v-model="form.categoryId" class="select">
+          <option v-for="entry in kindCategories" :key="entry.id" :value="entry.id">{{ entry.name }}</option>
+        </select>
       </label>
 
-      <div class="pair">
+      <label class="field">
+        <span class="label">Nome{{ kind === 'garment' ? ' · opcional' : '' }}</span>
+        <input
+          v-model="form.name"
+          class="input"
+          type="text"
+          :placeholder="kind === 'garment' ? `Padrão: ${defaultsForCategory(category).name}` : 'Nome do perfume'"
+          autocomplete="off"
+        >
+      </label>
+    </section>
+
+    <button v-if="!editing" type="button" class="new__details-toggle rise rise-3" @click="detalhesAbertos = !detalhesAbertos">
+      <span>
+        <strong>{{ detalhesAbertos ? 'Ocultar detalhes' : 'Adicionar detalhes' }}</strong>
+        <small>Marca, cor, tamanho, uso, preço e observações</small>
+      </span>
+      <AppIcon name="chevronDown" size="1rem" :class="{ 'new__details-chevron--open': detalhesAbertos }" />
+    </button>
+
+    <template v-if="detalhesAbertos">
+      <section class="group rise rise-3">
+        <h2 class="sec-head__title"><AppIcon name="layers" size="1.0625rem" />Cor</h2>
+        <div class="palette" role="group" aria-label="Cor da peça">
+          <button
+            v-for="hex in PALETTE"
+            :key="hex"
+            type="button"
+            class="palette__dot"
+            :class="{ 'palette__dot--on': form.colorHex.toLowerCase() === hex }"
+            :style="{ background: hex }"
+            :aria-label="`Cor ${hex}`"
+            :aria-pressed="form.colorHex.toLowerCase() === hex"
+            @click="form.colorHex = hex"
+          />
+          <label class="palette__custom">
+            <span class="sr-only">Escolher outra cor</span>
+            <AppIcon name="plus" size="0.875rem" :weight="2.4" />
+            <input v-model="form.colorHex" type="color">
+          </label>
+        </div>
+        <label v-if="kind === 'garment'" class="field">
+          <span class="label">Nome da cor</span>
+          <input v-model="form.color" class="input" type="text" placeholder="Azul claro" autocomplete="off">
+        </label>
+      </section>
+
+      <section class="group rise rise-4">
+        <h2 class="sec-head__title"><AppIcon name="info" size="1.0625rem" />Ficha</h2>
         <label class="field">
           <span class="label">Marca</span>
           <input v-model="form.brand" class="input" type="text" placeholder="Opcional" autocomplete="off">
         </label>
-        <label class="field">
-          <span class="label">Categoria</span>
-          <select v-model="form.categoryId" class="select">
-            <option v-for="entry in kindCategories" :key="entry.id" :value="entry.id">{{ entry.name }}</option>
-          </select>
-        </label>
-      </div>
-    </section>
-
-    <section class="group rise rise-3">
-      <h2 class="sec-head__title"><AppIcon name="layers" size="1.0625rem" />Cor</h2>
-      <div class="palette" role="group" aria-label="Cor da peça">
-        <button
-          v-for="hex in PALETTE"
-          :key="hex"
-          type="button"
-          class="palette__dot"
-          :class="{ 'palette__dot--on': form.colorHex.toLowerCase() === hex }"
-          :style="{ background: hex }"
-          :aria-label="`Cor ${hex}`"
-          :aria-pressed="form.colorHex.toLowerCase() === hex"
-          @click="form.colorHex = hex"
-        />
-        <label class="palette__custom">
-          <span class="sr-only">Escolher outra cor</span>
-          <AppIcon name="plus" size="0.875rem" :weight="2.4" />
-          <input v-model="form.colorHex" type="color">
-        </label>
-      </div>
-      <label v-if="kind === 'garment'" class="field">
-        <span class="label">Nome da cor</span>
-        <input v-model="form.color" class="input" type="text" placeholder="Azul claro" autocomplete="off">
-      </label>
-    </section>
-
-    <section v-if="kind === 'garment'" class="group rise rise-4">
-      <h2 class="sec-head__title"><AppIcon name="info" size="1.0625rem" />Ficha</h2>
-      <div class="pair">
-        <label class="field">
-          <span class="label">Tamanho</span>
-          <input v-model="form.size" class="input" type="text" placeholder="M" autocomplete="off">
-        </label>
-        <label class="field">
-          <span class="label">Material</span>
-          <input v-model="form.material" class="input" type="text" placeholder="Algodão oxford" autocomplete="off">
-        </label>
-      </div>
-    </section>
-
-    <section v-else class="group rise rise-4">
-      <h2 class="sec-head__title"><AppIcon name="info" size="1.0625rem" />Ficha</h2>
-      <div class="pair">
-        <label class="field">
-          <span class="label">Concentração</span>
-          <select v-model="form.concentration" class="select">
-            <option>EDC</option><option>EDT</option><option>EDP</option><option>Extrait</option>
-          </select>
-        </label>
-        <label class="field">
-          <span class="label">Volume (ml)</span>
-          <input v-model.number="form.volumeMl" class="input" type="number" inputmode="numeric" min="0" placeholder="100">
-        </label>
-      </div>
-      <div class="field">
-        <span class="label">Projeção</span>
-        <AppSegmented
-          v-model="form.projection"
-          label="Projeção"
-          :options="[{ value: 'low', label: 'Baixa' }, { value: 'moderate', label: 'Moderada' }, { value: 'high', label: 'Alta' }]"
-        />
-      </div>
-    </section>
-
-    <!-- estes três campos são o que o recomendador realmente lê -->
-    <section class="group rise rise-4">
-      <h2 class="sec-head__title"><AppIcon name="sun" size="1.0625rem" />Uso</h2>
-      <p class="group__note">É daqui que a sugestão diária tira as escolhas. Vale gastar dez segundos.</p>
-
-      <div class="field">
-        <span class="label">Formalidade</span>
-        <AppSegmented
-          v-model="formality"
-          label="Formalidade"
-          :options="[{ value: '1', label: 'Casual' }, { value: '2', label: 'Intermediária' }, { value: '3', label: 'Formal' }]"
-        />
-      </div>
-
-      <div class="field">
-        <span class="label">Clima</span>
-        <div class="chip-row" data-hscroll role="group" aria-label="Clima">
-          <button
-            v-for="value in (['hot', 'mild', 'cold'] as Climate[])"
-            :key="value"
-            type="button"
-            class="chip"
-            :aria-pressed="climates.includes(value)"
-            @click="toggleClimate(value)"
-          >
-            <AppIcon :name="CLIMATE_ICONS[value]" size="1rem" />
-            {{ CLIMATE_LABELS[value] }}
-          </button>
+        <div v-if="kind === 'garment'" class="pair">
+          <label class="field">
+            <span class="label">Tamanho</span>
+            <input v-model="form.size" class="input" type="text" placeholder="M" autocomplete="off">
+          </label>
+          <label class="field">
+            <span class="label">Material</span>
+            <input v-model="form.material" class="input" type="text" placeholder="Algodão oxford" autocomplete="off">
+          </label>
         </div>
-      </div>
+        <template v-else>
+          <div class="pair">
+            <label class="field">
+              <span class="label">Concentração</span>
+              <select v-model="form.concentration" class="select">
+                <option>EDC</option><option>EDT</option><option>EDP</option><option>Extrait</option>
+              </select>
+            </label>
+            <label class="field">
+              <span class="label">Volume (ml)</span>
+              <input v-model.number="form.volumeMl" class="input" type="number" inputmode="numeric" min="0" placeholder="100">
+            </label>
+          </div>
+          <div class="field">
+            <span class="label">Projeção</span>
+            <AppSegmented
+              v-model="form.projection"
+              label="Projeção"
+              :options="[{ value: 'low', label: 'Baixa' }, { value: 'moderate', label: 'Moderada' }, { value: 'high', label: 'Alta' }]"
+            />
+          </div>
+        </template>
+      </section>
 
-      <div class="field">
-        <span class="label">Situação</span>
-        <div class="chip-row" data-hscroll role="group" aria-label="Situação">
-          <button
-            v-for="entry in RECOMMENDATION_CONTEXTS"
-            :key="entry.id"
-            type="button"
-            class="chip"
-            :aria-pressed="contexts.includes(entry.id)"
-            @click="toggleContext(entry.id)"
-          >
-            <AppIcon :name="CONTEXT_ICONS[entry.id] ?? 'spark'" size="1rem" />
-            {{ entry.label }}
-          </button>
+      <!-- estes três campos são o que o recomendador realmente lê -->
+      <section class="group rise rise-4">
+        <h2 class="sec-head__title"><AppIcon name="sun" size="1.0625rem" />Uso</h2>
+        <p class="group__note">No cadastro rápido estes valores vêm da categoria. Ajuste quando a peça fugir do padrão.</p>
+
+        <div class="field">
+          <span class="label">Formalidade</span>
+          <AppSegmented
+            v-model="formality"
+            label="Formalidade"
+            :options="[{ value: '1', label: 'Casual' }, { value: '2', label: 'Intermediária' }, { value: '3', label: 'Formal' }]"
+          />
         </div>
-      </div>
-    </section>
 
-    <section v-if="editing && uso" class="group rise rise-5">
-      <h2 class="sec-head__title"><AppIcon name="clock" size="1.0625rem" />Registro de uso</h2>
-      <p class="group__note">{{ uso }}</p>
-    </section>
+        <div class="field">
+          <span class="label">Clima</span>
+          <div class="chip-row" data-hscroll role="group" aria-label="Clima">
+            <button
+              v-for="value in (['hot', 'mild', 'cold'] as Climate[])"
+              :key="value"
+              type="button"
+              class="chip"
+              :aria-pressed="climates.includes(value)"
+              @click="toggleClimate(value)"
+            >
+              <AppIcon :name="CLIMATE_ICONS[value]" size="1rem" />
+              {{ CLIMATE_LABELS[value] }}
+            </button>
+          </div>
+        </div>
 
-    <section class="group rise rise-5">
-      <h2 class="sec-head__title"><AppIcon name="plus" size="1.0625rem" />Extras</h2>
-      <div class="pair">
+        <div class="field">
+          <span class="label">Situação</span>
+          <div class="chip-row" data-hscroll role="group" aria-label="Situação">
+            <button
+              v-for="entry in RECOMMENDATION_CONTEXTS"
+              :key="entry.id"
+              type="button"
+              class="chip"
+              :aria-pressed="contexts.includes(entry.id)"
+              @click="toggleContext(entry.id)"
+            >
+              <AppIcon :name="CONTEXT_ICONS[entry.id] ?? 'spark'" size="1rem" />
+              {{ entry.label }}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="editing && uso" class="group rise rise-5">
+        <h2 class="sec-head__title"><AppIcon name="clock" size="1.0625rem" />Registro de uso</h2>
+        <p class="group__note">{{ uso }}</p>
+      </section>
+
+      <section class="group rise rise-5">
+        <h2 class="sec-head__title"><AppIcon name="plus" size="1.0625rem" />Extras</h2>
+        <div class="pair">
+          <label class="field">
+            <span class="label">Preço (R$)</span>
+            <input v-model.number="form.price" class="input" type="number" inputmode="numeric" min="0" placeholder="Opcional">
+          </label>
+          <label class="field">
+            <span class="label">Link de origem</span>
+            <input v-model="form.sourceUrl" class="input" type="url" placeholder="https://" autocomplete="off">
+          </label>
+        </div>
         <label class="field">
-          <span class="label">Preço (R$)</span>
-          <input v-model.number="form.price" class="input" type="number" inputmode="numeric" min="0" placeholder="Opcional">
+          <span class="label">Observação</span>
+          <textarea v-model="form.description" class="textarea" placeholder="Como ela cai, com o que combina, o que evitar." />
         </label>
-        <label class="field">
-          <span class="label">Link de origem</span>
-          <input v-model="form.sourceUrl" class="input" type="url" placeholder="https://" autocomplete="off">
-        </label>
-      </div>
-      <label class="field">
-        <span class="label">Observação</span>
-        <textarea v-model="form.description" class="textarea" placeholder="Como ela cai, com o que combina, o que evitar." />
-      </label>
-    </section>
+      </section>
+    </template>
 
     <p v-if="error" class="new__error" role="alert">
       <AppIcon name="info" size="1.0625rem" />
@@ -480,6 +573,32 @@ useHead({ title: editing.value ? `Editar · ${props.item?.name}` : 'Adicionar ·
 .preview__copy span { color: var(--ink-3); font-size: var(--fs-xs); }
 
 .new__switches { display: grid; gap: var(--s2); margin-top: var(--s4); }
+.new__source {
+  margin-top: var(--s2);
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+  line-height: 1.45;
+}
+.new__source a { color: var(--ink); text-decoration: underline; text-underline-offset: 0.15em; }
+.new__details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  width: 100%;
+  margin-top: var(--s4);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+  text-align: left;
+  box-shadow: var(--sh-inset);
+}
+.new__details-toggle > span { display: grid; gap: 0.125rem; }
+.new__details-toggle strong { font-size: var(--fs-sm); font-variation-settings: "wght" 660; }
+.new__details-toggle small { color: var(--ink-3); font-size: var(--fs-xs); }
+.new__details-toggle .ico { transition: transform var(--t) var(--ease); }
+.new__details-chevron--open { transform: rotate(180deg); }
 
 .group { display: grid; gap: var(--s3); margin-top: var(--s7); }
 .group__note { margin-top: calc(var(--s1) * -1); color: var(--ink-3); font-size: var(--fs-xs); line-height: 1.45; }

@@ -8,7 +8,8 @@ function row(over: Partial<ItemRow> = {}): ItemRow {
   return {
     id: 'i1', user_id: 'u1', category_id: 'c1', kind: 'garment', ownership: 'owned',
     name: 'Camisa oxford', brand: 'Acervo', description: '', image_path: null,
-    image_cutout: false, source_url: null, price: 279, currency: 'BRL', color: 'Azul claro', color_hex: '#9caeb2',
+    image_cutout: false, source_url: null, source_provider: null, source_license: null,
+    source_attribution: null, price: 279, currency: 'BRL', color: 'Azul claro', color_hex: '#9caeb2',
     size: 'M', material: 'Algodão', formality: 2, climates: ['mild', 'cold'],
     contexts: ['work'], style_tags: [], concentration: null, volume_ml: null,
     remaining_percent: null, projection: null, last_worn_at: null, wear_count: 0,
@@ -142,5 +143,17 @@ describe('fotografia', () => {
   it('não manda a URL assinada de volta para o banco', () => {
     const comUrl = { ...item({ id: 'i1', categoryId: 'c1' }), imagePath: 'u1/a.webp', imageUrl: 'https://assinada' }
     expect(fromItem(comUrl)).not.toHaveProperty('imageUrl')
+  })
+
+  it('preserva a procedência de uma imagem externa', () => {
+    const linha = row({
+      source_url: 'https://world.openbeautyfacts.org/product/12345678',
+      source_provider: 'Open Beauty Facts',
+      source_license: 'ODbL 1.0 · CC BY-SA',
+      source_attribution: 'Open Beauty Facts contributors'
+    })
+    const dominio = toItem(linha)
+    expect(dominio.sourceProvider).toBe('Open Beauty Facts')
+    expect(fromItem(dominio).source_attribution).toBe('Open Beauty Facts contributors')
   })
 })

@@ -20,6 +20,9 @@ export interface ItemRow {
   image_path: string | null
   image_cutout: boolean
   source_url: string | null
+  source_provider: string | null
+  source_license: string | null
+  source_attribution: string | null
   price: string | number | null
   currency: string
   color: string | null
@@ -84,6 +87,9 @@ export function toItem(row: ItemRow): CollectionItem {
     imageCutout: row.image_cutout ?? false,
     imageUrl: undefined,
     sourceUrl: text(row.source_url),
+    sourceProvider: text(row.source_provider),
+    sourceLicense: text(row.source_license),
+    sourceAttribution: text(row.source_attribution),
     price: num(row.price),
     currency: 'BRL',
     color: text(row.color),
@@ -118,6 +124,9 @@ export function fromItem(item: CollectionItem): Omit<ItemRow, 'user_id'> {
     image_path: item.imagePath ?? null,
     image_cutout: item.imageCutout ?? false,
     source_url: item.sourceUrl ?? null,
+    source_provider: item.sourceProvider ?? null,
+    source_license: item.sourceLicense ?? null,
+    source_attribution: item.sourceAttribution ?? null,
     price: item.price ?? null,
     currency: 'BRL',
     color: scent ? null : item.color ?? null,
