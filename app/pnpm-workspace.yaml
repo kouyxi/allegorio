@@ -1,3 +1,11 @@
+# Não é monorepo: um pacote só, na raiz. `pnpm approve-builds` escreveu este
+# arquivo só com `allowBuilds`, sem `packages`, e o pnpm 10 recusa esse arquivo
+# com "packages field missing or empty" antes até de tentar instalar — é o que
+# derrubava o build na Cloudflare, que fixa essa versão. O pnpm local (11.x) é
+# mais tolerante e não acusava nada. https://github.com/pnpm/pnpm/issues/9361
+packages:
+  - .
+
 storeDir: .pnpm-store
 
 allowBuilds:
